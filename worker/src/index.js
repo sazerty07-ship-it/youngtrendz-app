@@ -97,7 +97,7 @@ function validateOrderItems(value) {
   return value.map(item => {
     const orderItemId = String(item?.orderItemId || "").trim();
     const quantity = item?.quantity === undefined ? undefined : Number(item.quantity);
-    if (!/^\\d{5,20}$/.test(orderItemId)) throw new Error("Ongeldig orderItemId.");
+    if (!/^\d{5,20}$/.test(orderItemId)) throw new Error("Ongeldig orderItemId.");
     if (quantity !== undefined && (!Number.isInteger(quantity) || quantity < 1 || quantity > 1000)) {
       throw new Error("Ongeldige hoeveelheid voor een orderitem.");
     }
@@ -222,7 +222,7 @@ export default {
         return await upstreamJson(response, allowedOrigin, "Processtatus ophalen");
       }
 
-      const labelMatch = url.pathname.match(/^\\/api\\/shipping-labels\\/([A-Za-z0-9-]{5,100})$/);
+      const labelMatch = url.pathname.match(/^\/api\/shipping-labels\/([A-Za-z0-9-]{5,100})$/);
       if (labelMatch && request.method === "GET") {
         const token = await getBolToken(env);\n        const response = await fetch(BOL_API_URL + "/shipping-labels/" + encodeURIComponent(labelMatch[1]), {\n          headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.retailer.v10+pdf" }\n        });
         if (!response.ok) return json({ error: "PDF-label ophalen mislukt bij bol.com.", bolStatus: response.status }, response.status >= 500 ? 502 : response.status, allowedOrigin);
