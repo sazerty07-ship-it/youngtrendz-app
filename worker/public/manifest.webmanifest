@@ -1,0 +1,11 @@
+{
+  "name": "Young Trendz Label Automation",
+  "short_name": "Young Trendz",
+  "description": "Verzendlabels beheren voor Young Trendz",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#101827",
+  "lang": "nl-BE"
+}
