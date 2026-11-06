@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><link rel="manifest" href="manifest.webmanifest">
+<title>Young Trendz</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111827;background:#f3f4f6}
+*{box-sizing:border-box}body{margin:0}.top{background:#111827;color:white;padding:26px 20px 22px;border-radius:0 0 22px 22px}
+h1{font-size:25px;margin:0 0 5px}.muted{color:#6b7280;font-size:14px}.top .muted{color:#cbd5e1}
+main{padding:18px;max-width:620px;margin:auto}.card{background:white;border-radius:16px;padding:17px;margin:0 0 14px;box-shadow:0 2px 10px #1118270c}
+h2{font-size:17px;margin:0 0 12px}.option{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid #e5e7eb;border-radius:12px;margin:9px 0;cursor:pointer}
+.option.selected{border:2px solid #111827;background:#f9fafb}.option input{accent-color:#111827;width:18px;height:18px}
+.emoji{font-size:22px;width:30px}.grow{flex:1}.small{font-size:12px;color:#6b7280;margin-top:3px}
+button{border:0;border-radius:12px;background:#111827;color:white;padding:14px 16px;font-size:15px;font-weight:650;width:100%;margin-top:8px}
+.status{padding:11px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:13px;line-height:1.45}
+.pill{font-size:11px;padding:5px 8px;background:#e5e7eb;border-radius:99px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+footer{text-align:center;color:#9ca3af;font-size:11px;padding:10px 20px 28px}
+</style></head>
+<body>
+<header class="top"><h1>Young Trendz</h1><div class="muted">Verzendbeheer · iPhone</div></header>
+<main>
+<section class="card"><div class="row"><h2>Overzicht</h2><span class="pill">Prototype</span></div>
+<div class="row"><div><div style="font-size:28px;font-weight:750" id="orders">—</div><div class="muted">Openstaande bestellingen</div></div>
+<div><div style="font-size:28px;font-weight:750" id="printed">—</div><div class="muted">Labels geprint</div></div></div>
+</section>
+<section class="card"><h2>Printerverbinding</h2>
+<label class="option selected"><input type="radio" name="connection" value="auto" checked><span class="emoji">🔄</span><span class="grow"><b>Automatisch</b><div class="small">Gebruik de ingestelde beschikbare verbinding</div></span></label>
+<label class="option"><input type="radio" name="connection" value="bluetooth"><span class="emoji">ᛒ</span><span class="grow"><b>Bluetooth</b><div class="small">Via lokale printbridge; iPhone-webapps kunnen niet rechtstreeks universeel BLE-printen</div></span></label>
+<label class="option"><input type="radio" name="connection" value="ethernet"><span class="emoji">🌐</span><span class="grow"><b>Ethernet / netwerk</b><div class="small">Via printer op LAN of lokale printbridge</div></span></label>
+<button id="save">Verbindingskeuze opslaan</button>
+<p class="muted" id="saved" aria-live="polite"></p>
+</section>
+<section class="card"><h2>Bol.com-koppeling</h2><div class="status">Nog niet verbonden. API-gegevens moeten veilig op de server worden ingesteld. Vul je Client Secret nooit in deze webpagina of in een chat in.</div></section>
+<section class="card"><h2>Automatische verwerking</h2><div class="status">Uitgeschakeld in deze prototypeversie. Eerst moeten bol.com-authenticatie, verzendopties, labelaankoop, verzendregistratie en printertest op jouw account worden gevalideerd.</div></section>
+<section class="card"><h2>Veiligheidscontroles</h2><div class="muted">De uiteindelijke versie moet dubbele labelaankopen blokkeren, alleen geldige bol.com-verzendopties gebruiken en fouten of onduidelijke pakketgegevens naar een controlelijst sturen.</div></section>
+</main><footer>Young Trendz · interne app-prototype</footer>
+<script>
+const radios=[...document.querySelectorAll('input[name="connection"]')];
+function update(){document.querySelectorAll('.option').forEach(x=>x.classList.toggle('selected',x.querySelector('input').checked))}
+radios.forEach(r=>r.addEventListener('change',update));
+document.getElementById('save').onclick=()=>{const v=radios.find(r=>r.checked).value;localStorage.setItem('yt_connection',v);document.getElementById('saved').textContent='Keuze lokaal opgeslagen: '+v+'. Printerverbinding is nog niet getest.'};
+const old=localStorage.getItem('yt_connection');if(old){const r=radios.find(x=>x.value===old);if(r)r.checked=true;update()}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script></body></html>
