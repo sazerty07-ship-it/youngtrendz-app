@@ -1,4 +1,4 @@
-const CACHE = "youngtrendz-shell-v6";
+const CACHE = "youngtrendz-shell-v7";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
