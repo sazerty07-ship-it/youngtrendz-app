@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Young Trendz verzendlabels beheren">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>Young Trendz · Label Automation</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1220;--panel:#121d2e;--panel2:#172438;--line:#26364d;--muted:#9aabc0;--text:#f4f7fb;--accent:#8bd3ff;--good:#72d6a0;--warn:#f4c46a}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#1b3853 0,transparent 45%),var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+    .wrap{max-width:760px;margin:auto;padding:calc(22px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom))}
+    header{display:flex;align-items:center;gap:13px;margin-bottom:26px}.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#a6e2ff,#4388b5);color:#071321;display:grid;place-items:center;font-weight:900;font-size:20px;letter-spacing:-1px}
+    .brand{font-size:13px;letter-spacing:2px;color:var(--accent);font-weight:800}.subbrand{font-size:12px;color:var(--muted)}
+    h1{font-size:clamp(27px,7vw,36px);line-height:1.12;letter-spacing:-1px;margin:0 0 8px}h2{font-size:17px;margin:0 0 12px}.intro{color:var(--muted);margin:0 0 22px}
+    .status{display:flex;align-items:center;gap:9px;color:var(--warn);font-size:13px;font-weight:650}.dot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 12px #f4c46a66}
+    .card{background:linear-gradient(150deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 12px 28px #0002}
+    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.tag{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:999px;white-space:nowrap}
+    .options{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.option{background:#0c1625;border:1px solid var(--line);border-radius:13px;padding:13px 8px;text-align:center;color:var(--muted);cursor:pointer;min-height:82px;font:inherit}.option strong{display:block;color:var(--text);font-size:14px;margin-top:5px}.option[aria-pressed=true]{border-color:var(--accent);background:#173149;box-shadow:inset 0 0 0 1px var(--accent)}.symbol{font-size:20px}
+    .hint{font-size:12px;color:var(--muted);margin:12px 2px 0}.notice{border-left:3px solid var(--warn);padding:10px 12px;background:#2a251b;border-radius:8px;color:#e9d8b2;font-size:13px;margin-top:13px}
+    .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{padding:14px;background:#0c1625;border:1px solid var(--line);border-radius:13px}.stat small{display:block;color:var(--muted);font-size:12px}.stat b{font-size:23px;display:block;margin-top:2px}
+    .steps{display:grid;gap:13px}.step{display:flex;gap:12px;align-items:flex-start}.num{flex:0 0 27px;height:27px;border-radius:50%;background:#233d55;color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:800}.step p{margin:0;color:var(--muted);font-size:13px}.step b{color:var(--text);display:block;font-size:14px}
+    button.primary{width:100%;border:0;border-radius:12px;background:var(--accent);color:#071321;padding:14px 16px;font-weight:800;font-size:15px;cursor:pointer;margin-top:14px}button.secondary{border:1px solid var(--line);background:#0c1625;color:var(--text);border-radius:10px;padding:10px 13px;font-weight:650}
+    footer{text-align:center;color:#71839a;font-size:11px;padding:18px 0 0}a{color:var(--accent)}.smallprint{font-size:12px;color:var(--muted)}
+    @media(max-width:390px){.options{gap:6px}.option{font-size:13px;padding:10px 4px}.card{padding:15px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header><div class="logo">YT</div><div><div class="brand">YOUNG TRENDZ</div><div class="subbrand">LABEL AUTOMATION</div></div></header>
+  <div class="status"><span class="dot"></span><span id="connectionStatus">Basisinterface · koppelingen nog niet actief</span></div>
+  <h1>Verzendingen,<br>zonder omwegen.</h1>
+  <p class="intro">Beheer straks je bol.com-labels en printerverbinding vanaf je iPhone.</p>
+
+  <section class="card">
+    <div class="card-head"><h2>Printerverbinding</h2><span class="tag">Voorkeur opslaan</span></div>
+    <div class="options" role="group" aria-label="Kies printerverbinding">
+      <button class="option" data-mode="auto" aria-pressed="true"><span class="symbol">✦</span><strong>Automatisch</strong></button>
+      <button class="option" data-mode="bluetooth" aria-pressed="false"><span class="symbol">ᛒ</span><strong>Bluetooth</strong></button>
+      <button class="option" data-mode="ethernet" aria-pressed="false"><span class="symbol">⌁</span><strong>Ethernet</strong></button>
+    </div>
+    <p class="hint" id="modeHint">Automatisch: de app gebruikt later de beschikbare, geconfigureerde printverbinding.</p>
+    <div class="notice">De printer is nog niet verbonden. Deze keuze bewaart alleen je voorkeur; effectief printen wordt in een volgende bouwstap toegevoegd.</div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Verzendoverzicht</h2><span class="tag">Live koppeling volgt</span></div>
+    <div class="stats">
+      <div class="stat"><small>Nieuwe bestellingen</small><b>—</b></div>
+      <div class="stat"><small>Labels aangemaakt</small><b>—</b></div>
+    </div>
+    <p class="smallprint">Er worden nog geen bol.com-bestellingen opgehaald of labels aangemaakt.</p>
+  </section>
+
+  <section class="card">
+    <h2>Volgende stappen</h2>
+    <div class="steps">
+      <div class="step"><span class="num">1</span><p><b>Bol.com veilig koppelen</b>OAuth-toegang en order-/verzend-API instellen op een beveiligde server.</p></div>
+      <div class="step"><span class="num">2</span><p><b>Labelworkflow bouwen</b>Verzendopties controleren, label aanvragen en zending registreren zonder dubbele labels.</p></div>
+      <div class="step"><span class="num">3</span><p><b>Printer aansluiten</b>Bluetooth of Ethernet testen en een betrouwbare printverbinding configureren.</p></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Veiligheid</h2><span class="tag">Belangrijk</span></div>
+    <p class="smallprint">Vul je bol.com Client Secret of andere wachtwoorden nooit in deze webpagina in. Gevoelige API-sleutels horen uitsluitend op de beveiligde backend, niet in GitHub of in de browsercode.</p>
+  </section>
+  <footer>YOUNG TRENDZ · PRIVATE SHIPPING TOOL · VERSIE 0.1</footer>
+</main>
+<script>
+  const labels = {
+    auto: "Automatisch: de app gebruikt later de beschikbare, geconfigureerde printverbinding.",
+    bluetooth: "Bluetooth: op iPhone is rechtstreeks printen vanuit een gewone webapp beperkt. We onderzoeken de juiste printerroute.",
+    ethernet: "Ethernet: werkt alleen als de printer via het netwerk bereikbaar is en een lokale printservice beschikbaar is."
+  };
+  const buttons = [...document.querySelectorAll(".option")];
+  function selectMode(mode) {
+    buttons.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.mode === mode)));
+    document.getElementById("modeHint").textContent = labels[mode];
+    try { localStorage.setItem("yt-printer-mode", mode); } catch (_) {}
+  }
+  buttons.forEach(button => button.addEventListener("click", () => selectMode(button.dataset.mode)));
+  try {
+    const saved = localStorage.getItem("yt-printer-mode");
+    if (saved && labels[saved]) selectMode(saved);
+  } catch (_) {}
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+  }
+</script>
+</body>
+</html>
