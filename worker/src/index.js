@@ -224,7 +224,10 @@ export default {
 
       const labelMatch = url.pathname.match(/^\/api\/shipping-labels\/([A-Za-z0-9-]{5,100})$/);
       if (labelMatch && request.method === "GET") {
-        const token = await getBolToken(env);\n        const response = await fetch(BOL_API_URL + "/shipping-labels/" + encodeURIComponent(labelMatch[1]), {\n          headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.retailer.v10+pdf" }\n        });
+        const token = await getBolToken(env);
+        const response = await fetch(BOL_API_URL + "/shipping-labels/" + encodeURIComponent(labelMatch[1]), {
+          headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.retailer.v10+pdf" }
+        });
         if (!response.ok) return json({ error: "PDF-label ophalen mislukt bij bol.com.", bolStatus: response.status }, response.status >= 500 ? 502 : response.status, allowedOrigin);
         const headers = new Headers({
           "Content-Type": "application/pdf",
