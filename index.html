@@ -30,6 +30,7 @@
 <main class="wrap">
   <header><div class="logo">YT</div><div><div class="brand">YOUNG TRENDZ</div><div class="subbrand">LABEL AUTOMATION</div></div></header>
   <div class="status"><span class="dot" id="statusDot"></span><span id="connectionStatus">Backend nog niet getest</span></div>
+  <button class="secondary" id="changeToken" type="button" hidden>Toegangscode wijzigen</button>
   <h1>Verzendingen,<br>zonder omwegen.</h1>
   <p class="intro">Beheer straks je bol.com-labels en printerverbinding vanaf je iPhone.</p>
 
@@ -44,11 +45,11 @@
     <div class="notice">De printer is nog niet verbonden. Deze keuze bewaart alleen je voorkeur; effectief printen wordt in een volgende bouwstap toegevoegd.</div>
   </section>
 
-  <section class="card">
+  <section class="card" id="tokenCard">
     <div class="card-head"><h2>Veilige app-toegang</h2><span class="tag">Eenmalig instellen</span></div>
     <p class="smallprint">Vul hier de zelfgekozen APP_ACCESS_TOKEN in die je als Secret in Cloudflare hebt opgeslagen. Je bol.com Client Secret hoort hier niet thuis.</p>
     <input class="secret" id="appToken" type="password" autocomplete="current-password" placeholder="APP_ACCESS_TOKEN">
-    <button class="primary" id="saveToken">Toegangscode bewaren op dit toestel</button>
+    <button class="primary" id="saveToken">Code controleren en bewaren</button>
   </section>
 
   <section class="card">
@@ -99,26 +100,59 @@
   const ordersMessage = document.getElementById("ordersMessage");
   const ordersTag = document.getElementById("ordersTag");
   const statusText = document.getElementById("connectionStatus");
+  const tokenCard = document.getElementById("tokenCard");
+  const changeTokenButton = document.getElementById("changeToken");
+  function showTokenSettings(show) {
+    tokenCard.hidden = !show;
+    changeTokenButton.hidden = show;
+  }
   try {
     const savedToken = localStorage.getItem("yt-app-token");
-    if (savedToken) tokenInput.value = savedToken;
+    if (savedToken) {
+      tokenInput.value = savedToken;
+      showTokenSettings(false);
+      statusText.textContent = "Toegangscode op dit toestel bewaard";
+    }
   } catch (_) {}
+  changeTokenButton.addEventListener("click", () => {
+    showTokenSettings(true);
+    tokenInput.focus();
+  });
 
-  document.getElementById("saveToken").addEventListener("click", () => {
+  document.getElementById("saveToken").addEventListener("click", async () => {
     const token = tokenInput.value.trim();
     if (!token) { ordersMessage.textContent = "Vul eerst je APP_ACCESS_TOKEN in."; return; }
+    const saveButton = document.getElementById("saveToken");
+    saveButton.disabled = true;
+    saveButton.textContent = "Toegang controleren…";
+    ordersMessage.textContent = "Ik controleer of de toegangscode door de backend wordt aanvaard…";
     try {
+      const response = await fetch(API_BASE + "/api/orders?status=OPEN&fulfilment-method=FBR&page=1", {
+        headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
+        cache: "no-store"
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) throw new Error("De backend weigert deze code (401). Controleer de APP_ACCESS_TOKEN bij Runtime Secrets van de juiste Worker.");
       localStorage.setItem("yt-app-token", token);
-      ordersMessage.textContent = "Toegangscode bewaard op dit toestel. Je kunt nu de bestellingen ophalen.";
-      statusText.textContent = "App-toegangscode ingesteld";
-    } catch (_) {
-      ordersMessage.textContent = "Opslaan is niet gelukt. Controleer de browserinstellingen.";
+      showTokenSettings(false);
+      statusText.textContent = "Toegangscode aanvaard";
+      if (response.ok) {
+        ordersMessage.textContent = "Toegangscode gecontroleerd en bewaard. Je hoeft deze niet opnieuw in te vullen.";
+      } else {
+        ordersMessage.textContent = "De toegangscode is aanvaard en bewaard. De backend meldt nog wel: " + (data.error || ("HTTP " + response.status));
+      }
+    } catch (error) {
+      ordersMessage.textContent = error.message || "Opslaan is niet gelukt. Controleer de browserinstellingen.";
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = "Code controleren en bewaren";
     }
   });
 
   document.getElementById("loadOrders").addEventListener("click", async () => {
-    const token = tokenInput.value.trim();
-    if (!token) { ordersMessage.textContent = "Vul eerst je APP_ACCESS_TOKEN in en bewaar deze."; return; }
+    let token = "";
+    try { token = localStorage.getItem("yt-app-token") || ""; } catch (_) {}
+    if (!token) { showTokenSettings(true); ordersMessage.textContent = "Vul eerst je APP_ACCESS_TOKEN in."; return; }
     ordersMessage.textContent = "Bezig met verbinden met bol.com…";
     ordersTag.textContent = "Verbinden…";
     statusText.textContent = "Backend wordt getest…";
@@ -134,6 +168,7 @@
       document.getElementById("ordersCount").textContent = String(orders.length);
       ordersTag.textContent = "Verbonden";
       statusText.textContent = "Bol.com-backend verbonden";
+      showTokenSettings(false);
       ordersMessage.textContent = orders.length
         ? "Bestellingen succesvol opgehaald. Alleen-lezen: er zijn nog geen labels aangemaakt."
         : "Verbinding werkt, maar bol.com gaf geen open FBR-bestellingen terug.";
@@ -152,6 +187,7 @@
     } catch (error) {
       ordersTag.textContent = "Niet verbonden";
       statusText.textContent = "Backendverbinding mislukt";
+      if (String(error.message).includes("401") || String(error.message).includes("toegangscode")) showTokenSettings(true);
       ordersMessage.textContent = error.message + " Controleer je APP_ACCESS_TOKEN en Cloudflare Secrets.";
       document.getElementById("ordersCount").textContent = "—";
     }
