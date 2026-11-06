@@ -1,201 +1,103 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#101827">
-  <meta name="description" content="Young Trendz verzendlabels beheren">
-  <link rel="manifest" href="./manifest.webmanifest">
-  <title>Young Trendz · Label Automation</title>
-  <style>
-    :root{color-scheme:dark;--bg:#0b1220;--panel:#121d2e;--panel2:#172438;--line:#26364d;--muted:#9aabc0;--text:#f4f7fb;--accent:#8bd3ff;--good:#72d6a0;--warn:#f4c46a}
-    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#1b3853 0,transparent 45%),var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
-    .wrap{max-width:760px;margin:auto;padding:calc(22px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom))}
-    header{display:flex;align-items:center;gap:13px;margin-bottom:26px}.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#a6e2ff,#4388b5);color:#071321;display:grid;place-items:center;font-weight:900;font-size:20px;letter-spacing:-1px}
-    .brand{font-size:13px;letter-spacing:2px;color:var(--accent);font-weight:800}.subbrand{font-size:12px;color:var(--muted)}
-    h1{font-size:clamp(27px,7vw,36px);line-height:1.12;letter-spacing:-1px;margin:0 0 8px}h2{font-size:17px;margin:0 0 12px}.intro{color:var(--muted);margin:0 0 22px}
-    .status{display:flex;align-items:center;gap:9px;color:var(--warn);font-size:13px;font-weight:650}.dot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 12px #f4c46a66}
-    .card{background:linear-gradient(150deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 12px 28px #0002}
-    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.tag{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:999px;white-space:nowrap}
-    .options{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.option{background:#0c1625;border:1px solid var(--line);border-radius:13px;padding:13px 8px;text-align:center;color:var(--muted);cursor:pointer;min-height:82px;font:inherit}.option strong{display:block;color:var(--text);font-size:14px;margin-top:5px}.option[aria-pressed=true]{border-color:var(--accent);background:#173149;box-shadow:inset 0 0 0 1px var(--accent)}.symbol{font-size:20px}
-    .hint{font-size:12px;color:var(--muted);margin:12px 2px 0}.notice{border-left:3px solid var(--warn);padding:10px 12px;background:#2a251b;border-radius:8px;color:#e9d8b2;font-size:13px;margin-top:13px}
-    .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{padding:14px;background:#0c1625;border:1px solid var(--line);border-radius:13px}.stat small{display:block;color:var(--muted);font-size:12px}.stat b{font-size:23px;display:block;margin-top:2px}
-    .steps{display:grid;gap:13px}.step{display:flex;gap:12px;align-items:flex-start}.num{flex:0 0 27px;height:27px;border-radius:50%;background:#233d55;color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:800}.step p{margin:0;color:var(--muted);font-size:13px}.step b{color:var(--text);display:block;font-size:14px}
-    input.secret{width:100%;background:#0c1625;border:1px solid var(--line);border-radius:10px;padding:13px;color:var(--text);font:inherit;margin:6px 0} .order-list{display:grid;gap:9px;margin-top:14px}.order{padding:12px;background:#0c1625;border:1px solid var(--line);border-radius:11px}.order b{display:block}.order small{color:var(--muted)}button.primary{width:100%;border:0;border-radius:12px;background:var(--accent);color:#071321;padding:14px 16px;font-weight:800;font-size:15px;cursor:pointer;margin-top:14px}button.secondary{border:1px solid var(--line);background:#0c1625;color:var(--text);border-radius:10px;padding:10px 13px;font-weight:650}
-    footer{text-align:center;color:#71839a;font-size:11px;padding:18px 0 0}a{color:var(--accent)}.smallprint{font-size:12px;color:var(--muted)}
-    @media(max-width:390px){.options{gap:6px}.option{font-size:13px;padding:10px 4px}.card{padding:15px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<meta name="description" content="Young Trendz verzendlabels beheren">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>Young Trendz · Label Automation</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#142238;--panel2:#192b42;--line:#2b4059;--muted:#a6b6c9;--text:#f4f7fb;--accent:#8bd3ff;--good:#72d6a0;--warn:#f4c46a;--bad:#ff9a9a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#1b3853 0,transparent 45%),var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+.wrap{max-width:780px;margin:auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:12px;margin-bottom:20px}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(145deg,#a6e2ff,#4388b5);color:#071321;display:grid;place-items:center;font-weight:900;font-size:20px}.brand{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:800}.subbrand{font-size:12px;color:var(--muted)}
+h1{font-size:clamp(27px,7vw,36px);line-height:1.12;letter-spacing:-1px;margin:12px 0 8px}h2{font-size:17px;margin:0}.intro{color:var(--muted);margin:0 0 20px}
+.status{display:flex;align-items:center;gap:8px;color:var(--warn);font-size:13px;font-weight:650}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.card{background:linear-gradient(150deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:17px;padding:16px;margin:13px 0;box-shadow:0 12px 28px #0002}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.tag{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:999px;white-space:nowrap}
+.small{font-size:12px;color:var(--muted)}.muted{color:var(--muted)}.notice{border-left:3px solid var(--warn);padding:10px 12px;background:#2a251b;border-radius:8px;color:#e9d8b2;font-size:12px;margin-top:12px}
+input.secret{width:100%;background:#0c1625;border:1px solid var(--line);border-radius:10px;padding:13px;color:var(--text);font:inherit;margin:8px 0}
+button{font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.primary{width:100%;border:0;border-radius:11px;background:var(--accent);color:#071321;padding:13px 15px;font-weight:800;font-size:14px;margin-top:10px}.secondary{border:1px solid var(--line);background:#0c1625;color:var(--text);border-radius:10px;padding:9px 12px;font-weight:650}.tiny{padding:7px 10px;font-size:12px}
+.order-list{display:grid;gap:10px;margin-top:13px}.order{padding:13px;background:#0c1625;border:1px solid var(--line);border-radius:12px}.order-title{font-weight:800}.order-meta{font-size:12px;color:var(--muted);margin-top:4px}.order-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.options{display:grid;gap:8px;margin-top:10px}.shipping-option{border:1px solid var(--line);background:#111e30;border-radius:10px;padding:11px;text-align:left;color:var(--text);width:100%}.shipping-option.selected{border-color:var(--accent);background:#173149}.price{font-weight:800;color:var(--accent)}.recommended{font-size:10px;color:var(--good);margin-left:5px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.stat{padding:12px;background:#0c1625;border:1px solid var(--line);border-radius:12px}.stat small{display:block;color:var(--muted);font-size:11px}.stat b{font-size:22px;display:block;margin-top:2px}
+.hidden{display:none!important}.success{color:var(--good)}.error{color:var(--bad)}.label-panel{margin-top:12px;padding:12px;background:#142a28;border:1px solid #31584c;border-radius:11px}.label-panel button{margin-top:8px}
+footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
+@media(max-width:390px){.card{padding:14px}.order-actions>*{flex:1}}
+</style>
 </head>
 <body>
 <main class="wrap">
-  <header><div class="logo">YT</div><div><div class="brand">YOUNG TRENDZ</div><div class="subbrand">LABEL AUTOMATION</div></div></header>
-  <div class="status"><span class="dot" id="statusDot"></span><span id="connectionStatus">Backend nog niet getest</span></div>
-  <button class="secondary" id="changeToken" type="button" hidden>Toegangscode wijzigen</button>
-  <h1>Verzendingen,<br>zonder omwegen.</h1>
-  <p class="intro">Beheer straks je bol.com-labels en printerverbinding vanaf je iPhone.</p>
+<header><div class="logo">YT</div><div><div class="brand">YOUNG TRENDZ</div><div class="subbrand">LABEL AUTOMATION</div></div></header>
+<div class="status"><span class="dot" id="statusDot"></span><span id="connectionStatus">Backend nog niet getest</span></div>
+<button class="secondary tiny hidden" id="changeToken">Toegangscode wijzigen</button>
+<h1>Verzendingen,<br>zonder omwegen.</h1>
+<p class="intro">Bestellingen ophalen, verzendopties kiezen en bol.com-labels voorbereiden.</p>
 
-  <section class="card">
-    <div class="card-head"><h2>Printerverbinding</h2><span class="tag">Voorkeur opslaan</span></div>
-    <div class="options" role="group" aria-label="Kies printerverbinding">
-      <button class="option" data-mode="auto" aria-pressed="true"><span class="symbol">✦</span><strong>Automatisch</strong></button>
-      <button class="option" data-mode="bluetooth" aria-pressed="false"><span class="symbol">ᛒ</span><strong>Bluetooth</strong></button>
-      <button class="option" data-mode="ethernet" aria-pressed="false"><span class="symbol">⌁</span><strong>Ethernet</strong></button>
-    </div>
-    <p class="hint" id="modeHint">Automatisch: de app gebruikt later de beschikbare, geconfigureerde printverbinding.</p>
-    <div class="notice">De printer is nog niet verbonden. Deze keuze bewaart alleen je voorkeur; effectief printen wordt in een volgende bouwstap toegevoegd.</div>
-  </section>
+<section class="card" id="tokenCard">
+<div class="card-head"><h2>Veilige app-toegang</h2><span class="tag">Eenmalig instellen</span></div>
+<p class="small">Gebruik de APP_ACCESS_TOKEN die als Runtime Secret in Cloudflare staat. Je bol.com Client Secret hoort hier niet thuis.</p>
+<input class="secret" id="appToken" type="password" autocomplete="current-password" placeholder="APP_ACCESS_TOKEN">
+<button class="primary" id="saveToken">Toegangscode controleren</button>
+</section>
 
-  <section class="card" id="tokenCard">
-    <div class="card-head"><h2>Veilige app-toegang</h2><span class="tag">Eenmalig instellen</span></div>
-    <p class="smallprint">Vul hier de zelfgekozen APP_ACCESS_TOKEN in die je als Secret in Cloudflare hebt opgeslagen. Je bol.com Client Secret hoort hier niet thuis.</p>
-    <input class="secret" id="appToken" type="password" autocomplete="current-password" placeholder="APP_ACCESS_TOKEN">
-    <button class="primary" id="saveToken">Code controleren en bewaren</button>
-  </section>
+<section class="card">
+<div class="card-head"><h2>Verzendoverzicht</h2><span class="tag" id="ordersTag">Niet verbonden</span></div>
+<div class="stats">
+<div class="stat"><small>Open FBR-bestellingen</small><b id="ordersCount">—</b></div>
+<div class="stat"><small>Labels aangevraagd</small><b id="labelsCount">0</b></div>
+</div>
+<button class="primary" id="loadOrders">Open bestellingen ophalen</button>
+<div id="ordersMessage" class="small" style="margin-top:10px">Nog geen bestellingen opgehaald.</div>
+<div class="order-list" id="orderList" aria-live="polite"></div>
+</section>
 
-  <section class="card">
-    <div class="card-head"><h2>Verzendoverzicht</h2><span class="tag" id="ordersTag">Backend niet verbonden</span></div>
-    <div class="stats">
-      <div class="stat"><small>Open FBR-bestellingen</small><b id="ordersCount">—</b></div>
-      <div class="stat"><small>Labels aangemaakt</small><b>0</b></div>
-    </div>
-    <button class="primary" id="loadOrders">Open bol.com-bestellingen ophalen</button>
-    <div class="order-list" id="orderList" aria-live="polite"></div>
-    <p class="smallprint" id="ordersMessage">Nog geen bestellingen opgehaald. Dit is voorlopig alleen-lezen; er worden geen labels aangemaakt.</p>
-  </section>
+<section class="card">
+<div class="card-head"><h2>Printer & etiket</h2><span class="tag">LW650XL PRO</span></div>
+<p class="small">Etiketrol: <b>159 × 104 mm</b>. De printer drukt maximaal 108 mm breed af, dus het label wordt 90° gedraaid naar 104 mm breed en 159 mm lang.</p>
+<p class="small">De app maakt een print-PDF met witte buitenmarges automatisch bijgesneden. Omdat we nog geen voorbeeldlabel hebben kunnen controleren, moet de eerste afdruk als test worden nagekeken.</p>
+<div class="notice">Cloudflare kan niet rechtstreeks via Bluetooth naar je printer sturen. Op iPhone openen we daarom de klaargemaakte PDF; van daaruit kies je de printer via de ondersteunde print-app of iOS-afdrukoptie. Een volledig automatische printverbinding vereist nog een compatibele lokale printkoppeling.</div>
+</section>
 
-  <section class="card">
-    <h2>Volgende stappen</h2>
-    <div class="steps">
-      <div class="step"><span class="num">1</span><p><b>Bol.com veilig koppelen</b>OAuth-toegang en order-/verzend-API instellen op een beveiligde server.</p></div>
-      <div class="step"><span class="num">2</span><p><b>Labelworkflow bouwen</b>Verzendopties controleren, label aanvragen en zending registreren zonder dubbele labels.</p></div>
-      <div class="step"><span class="num">3</span><p><b>Printer aansluiten</b>Bluetooth of Ethernet testen en een betrouwbare printverbinding configureren.</p></div>
-    </div>
-  </section>
-  <section class="card">
-    <div class="card-head"><h2>Veiligheid</h2><span class="tag">Belangrijk</span></div>
-    <p class="smallprint">Vul je bol.com Client Secret of andere wachtwoorden nooit in deze webpagina in. Gevoelige API-sleutels horen uitsluitend op de beveiligde backend, niet in GitHub of in de browsercode.</p>
-  </section>
-  <footer>YOUNG TRENDZ · PRIVATE SHIPPING TOOL · VERSIE 0.1</footer>
+<section class="card">
+<h2>Veilig verzenden</h2>
+<p class="small">Je kiest eerst een verzendoptie en vraagt daarna het label aan. Pas wanneer je op <b>Verzending definitief registreren</b> drukt, wordt de zending bij bol.com geregistreerd en de labelkost geactiveerd. Controleer vervoerder, prijs en pakketbeperkingen altijd voor bevestiging.</p>
+</section>
+<footer>YOUNG TRENDZ · PRIVATE SHIPPING TOOL · VERSIE 0.2</footer>
 </main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <script>
-  const API_BASE = "https://youngtrendz-app.s-azerty07.workers.dev";
-  const labels = {
-    auto: "Automatisch: de app gebruikt later de beschikbare, geconfigureerde printverbinding.",
-    bluetooth: "Bluetooth: op iPhone is rechtstreeks printen vanuit een gewone webapp beperkt. We onderzoeken de juiste printerroute.",
-    ethernet: "Ethernet: werkt alleen als de printer via het netwerk bereikbaar is en een lokale printservice beschikbaar is."
-  };
-  const buttons = [...document.querySelectorAll(".option")];
-  function selectMode(mode) {
-    buttons.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.mode === mode)));
-    document.getElementById("modeHint").textContent = labels[mode];
-    try { localStorage.setItem("yt-printer-mode", mode); } catch (_) {}
-  }
-  buttons.forEach(button => button.addEventListener("click", () => selectMode(button.dataset.mode)));
-  try {
-    const saved = localStorage.getItem("yt-printer-mode");
-    if (saved && labels[saved]) selectMode(saved);
-  } catch (_) {}
-
-  const tokenInput = document.getElementById("appToken");
-  const ordersMessage = document.getElementById("ordersMessage");
-  const ordersTag = document.getElementById("ordersTag");
-  const statusText = document.getElementById("connectionStatus");
-  const tokenCard = document.getElementById("tokenCard");
-  const changeTokenButton = document.getElementById("changeToken");
-  function showTokenSettings(show) {
-    tokenCard.hidden = !show;
-    changeTokenButton.hidden = show;
-  }
-  try {
-    const savedToken = localStorage.getItem("yt-app-token");
-    if (savedToken) {
-      tokenInput.value = savedToken;
-      showTokenSettings(false);
-      statusText.textContent = "Toegangscode op dit toestel bewaard";
-    }
-  } catch (_) {}
-  changeTokenButton.addEventListener("click", () => {
-    showTokenSettings(true);
-    tokenInput.focus();
-  });
-
-  document.getElementById("saveToken").addEventListener("click", async () => {
-    const token = tokenInput.value.trim();
-    if (!token) { ordersMessage.textContent = "Vul eerst je APP_ACCESS_TOKEN in."; return; }
-    const saveButton = document.getElementById("saveToken");
-    saveButton.disabled = true;
-    saveButton.textContent = "Toegang controleren…";
-    ordersMessage.textContent = "Ik controleer of de toegangscode door de backend wordt aanvaard…";
-    try {
-      const response = await fetch(API_BASE + "/api/auth-check", {
-        headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
-        cache: "no-store"
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.authorized) {
-        const details = " Secret ingesteld op Worker: " + (data.appAccessTokenConfigured ? "JA" : "NEE") +
-          ". Authorization-header ontvangen: " + (data.authorizationHeaderReceived ? "JA" : "NEE") + ".";
-        throw new Error("Toegangscode niet aanvaard." + details + " Controleer dat APP_ACCESS_TOKEN als Runtime Secret op Worker youngtrendz-app staat en exact overeenkomt.");
-      }
-      localStorage.setItem("yt-app-token", token);
-      showTokenSettings(false);
-      statusText.textContent = "Toegangscode aanvaard";
-      ordersMessage.textContent = "Toegangscode gecontroleerd en bewaard. Je hoeft deze niet opnieuw in te vullen.";
-    } catch (error) {
-      ordersMessage.textContent = error.message || "Opslaan is niet gelukt. Controleer de browserinstellingen.";
-    } finally {
-      saveButton.disabled = false;
-      saveButton.textContent = "Code controleren en bewaren";
-    }
-  });
-
-  document.getElementById("loadOrders").addEventListener("click", async () => {
-    let token = "";
-    try { token = localStorage.getItem("yt-app-token") || ""; } catch (_) {}
-    if (!token) { showTokenSettings(true); ordersMessage.textContent = "Vul eerst je APP_ACCESS_TOKEN in."; return; }
-    ordersMessage.textContent = "Bezig met verbinden met bol.com…";
-    ordersTag.textContent = "Verbinden…";
-    statusText.textContent = "Backend wordt getest…";
-    document.getElementById("orderList").replaceChildren();
-    try {
-      const response = await fetch(API_BASE + "/api/orders?status=OPEN&fulfilment-method=FBR&page=1", {
-        headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
-        cache: "no-store"
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || ("HTTP " + response.status));
-      const orders = Array.isArray(data.orders) ? data.orders : [];
-      document.getElementById("ordersCount").textContent = String(orders.length);
-      ordersTag.textContent = "Verbonden";
-      statusText.textContent = "Bol.com-backend verbonden";
-      showTokenSettings(false);
-      ordersMessage.textContent = orders.length
-        ? "Bestellingen succesvol opgehaald. Alleen-lezen: er zijn nog geen labels aangemaakt."
-        : "Verbinding werkt, maar bol.com gaf geen open FBR-bestellingen terug.";
-      const list = document.getElementById("orderList");
-      for (const order of orders) {
-        const card = document.createElement("div");
-        card.className = "order";
-        const heading = document.createElement("b");
-        heading.textContent = "Bestelling " + (order.orderId || "zonder ordernummer");
-        const details = document.createElement("small");
-        const items = Array.isArray(order.orderItems) ? order.orderItems : [];
-        details.textContent = items.map(item => (item.product ? item.product.title : item.title || item.ean || "Artikel") + " × " + (item.quantity || 1)).join(" · ") || "Geen artikelgegevens ontvangen";
-        card.append(heading, details);
-        list.append(card);
-      }
-    } catch (error) {
-      ordersTag.textContent = "Niet verbonden";
-      statusText.textContent = "Backendverbinding mislukt";
-      if (String(error.message).includes("401") || String(error.message).includes("toegangscode")) showTokenSettings(true);
-      ordersMessage.textContent = error.message + " Controleer je APP_ACCESS_TOKEN en Cloudflare Secrets.";
-      document.getElementById("ordersCount").textContent = "—";
-    }
-  });
-
-  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
-  }
+const API_BASE="https://youngtrendz-app.s-azerty07.workers.dev";
+const $=id=>document.getElementById(id);
+let appToken="";
+let orderState=new Map();
+let labelsRequested=0;
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+function setStatus(message,kind="warn"){$("connectionStatus").textContent=message;$("statusDot").style.color=kind==="good"?"var(--good)":kind==="bad"?"var(--bad)":"var(--warn)";}
+function setTokenUI(show){$("tokenCard").classList.toggle("hidden",!show);$("changeToken").classList.toggle("hidden",show);}
+function authHeaders(extra={}){return {"Authorization":"Bearer "+appToken,"Accept":"application/json",...extra};}
+async function api(path,options={}){const response=await fetch(API_BASE+path,{...options,headers:authHeaders(options.headers||{}),cache:"no-store"});const type=response.headers.get("content-type")||"";if(!response.ok){const data=type.includes("json")?await response.json().catch(()=>({})):{};throw new Error(data.error||("HTTP "+response.status));}return type.includes("application/pdf")?response:response.json();}
+try{appToken=localStorage.getItem("yt-app-token")||"";if(appToken){$("appToken").value=appToken;setTokenUI(false);setStatus("Toegangscode op dit toestel bewaard");}}catch(_){}
+$("changeToken").addEventListener("click",()=>{setTokenUI(true);$("appToken").focus();});
+$("saveToken").addEventListener("click",async()=>{const token=$("appToken").value.trim();if(!token){$("ordersMessage").textContent="Vul je toegangscode in.";return;}const b=$("saveToken");b.disabled=true;b.textContent="Controleren…";try{const r=await fetch(API_BASE+"/api/auth-check",{headers:{"Authorization":"Bearer "+token},cache:"no-store"});const d=await r.json();if(!r.ok||!d.authorized)throw new Error("Toegangscode niet aanvaard. Controleer APP_ACCESS_TOKEN bij Cloudflare Runtime Secrets.");appToken=token;localStorage.setItem("yt-app-token",token);setTokenUI(false);setStatus("Backendtoegang bevestigd","good");$("ordersMessage").textContent="Toegangscode veilig gecontroleerd.";}catch(e){$("ordersMessage").textContent=e.message;}finally{b.disabled=false;b.textContent="Toegangscode controleren";}});
+function getItems(order){return (order.orderItems||[]).filter(i=>i.orderItemId).map(i=>({orderItemId:String(i.orderItemId),quantity:Number(i.quantity||1)}));}
+function addText(parent,tag,text,className){const el=document.createElement(tag);el.textContent=text;if(className)el.className=className;parent.append(el);return el;}
+function money(v){if(v===undefined||v===null)return "Prijs niet vermeld";return new Intl.NumberFormat("nl-BE",{style:"currency",currency:"EUR"}).format(Number(v));}
+async function loadDeliveryOptions(order,card,button){button.disabled=true;button.textContent="Opties ophalen…";const area=card.querySelector(".options-area");area.replaceChildren();try{const result=await api("/api/delivery-options",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderItems:getItems(order)})});const options=result.deliveryOptions||[];if(!options.length){addText(area,"p","Geen geschikte verzendopties teruggekregen van bol.com.","small");return;}const choices=addText(area,"div","","options");let selected=null;const choose=document.createElement("button");choose.className="primary";choose.textContent="Geselecteerde verzendoptie gebruiken";choose.disabled=true;area.append(choose);
+for(const option of options){const b=document.createElement("button");b.type="button";b.className="shipping-option";const price=option.labelPrice?.totalPrice;const details=[option.labelDisplayName||option.transporterCode||"Verzendoptie",money(price),option.labelType||"",option.validUntilDate?"Geldig tot "+option.validUntilDate:""].filter(Boolean).join(" · ");b.textContent=details+(option.recommended?" · AANBEVOLEN":"");if(option.packageRestrictions){const extra=document.createElement("div");extra.className="small";extra.textContent="Beperkingen: "+[option.packageRestrictions.maxWeight,option.packageRestrictions.maxDimensions].filter(Boolean).join(" / ");b.append(extra);}b.addEventListener("click",()=>{selected=option;choices.querySelectorAll("button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");choose.disabled=false;});choices.append(b);}
+choose.addEventListener("click",()=>requestLabel(order,selected,card,choose));const recommended=options.find(o=>o.recommended);if(recommended){const idx=options.indexOf(recommended);choices.children[idx]?.click();}
+}catch(e){addText(area,"p",e.message,"small error");}finally{button.disabled=false;button.textContent="Verzendopties ophalen";}}
+async function pollProcess(id){let last=null;for(let n=0;n<20;n++){last=await api("/api/process-status?id="+encodeURIComponent(id));if(last.status==="SUCCESS"||last.status==="FAILURE"||last.status==="TIMEOUT")return last;await delay(3000);}return last;}
+async function requestLabel(order,option,card,button){button.disabled=true;button.textContent="Label aanvragen…";const area=card.querySelector(".label-area");area.replaceChildren();try{const result=await api("/api/shipping-labels",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderItems:getItems(order),shippingLabelOfferId:option.shippingLabelOfferId})});if(!result.processStatusId)throw new Error("Bol.com gaf geen processStatusId terug.");addText(area,"p","Label wordt verwerkt bij bol.com…","small");const status=await pollProcess(result.processStatusId);if(status.status!=="SUCCESS"||!status.entityId)throw new Error(status.errorMessage||("Labelverwerking: "+status.status));const shippingLabelId=String(status.entityId);labelsRequested++;$("labelsCount").textContent=String(labelsRequested);renderLabelActions(order,shippingLabelId,card,option);}catch(e){addText(area,"p",e.message,"small error");}finally{button.disabled=false;button.textContent="Geselecteerde verzendoptie gebruiken";}}
+function renderLabelActions(order,labelId,card,option){const area=card.querySelector(".label-area");area.replaceChildren();const panel=addText(area,"div","","label-panel");addText(panel,"b","Label klaar bij bol.com","success");addText(panel,"p",(option.labelDisplayName||option.transporterCode||"Verzendoptie")+" · "+money(option.labelPrice?.totalPrice),"small");const pdfButton=addText(panel,"button","PDF voorbereiden en openen","secondary");pdfButton.type="button";pdfButton.addEventListener("click",()=>openPrintPdf(labelId,pdfButton));const shipButton=addText(panel,"button","Verzending definitief registreren","primary");shipButton.type="button";shipButton.addEventListener("click",()=>registerShipment(order,labelId,shipButton));addText(panel,"p","Let op: definitief registreren bij bol.com activeert de labelkost.","small");}
+async function openPrintPdf(labelId,button){button.disabled=true;button.textContent="PDF ophalen…";let tab=null;try{tab=window.open("about:blank","_blank");const response=await api("/api/shipping-labels/"+encodeURIComponent(labelId));const source=await response.arrayBuffer();const blob=await makePrintPdf(source);const url=URL.createObjectURL(blob);if(tab){tab.location=url;}else{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.click();}button.textContent="Print-PDF opnieuw openen";}catch(e){if(tab)tab.close();alert("PDF verwerken is niet gelukt: "+e.message);button.textContent="PDF opnieuw proberen";}finally{button.disabled=false;}}
+async function makePrintPdf(source){if(!window.pdfjsLib||!window.jspdf)throw new Error("PDF-bibliotheken niet geladen. Controleer je internetverbinding en probeer opnieuw.");pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";const doc=await pdfjsLib.getDocument({data:new Uint8Array(source)}).promise;const page=await doc.getPage(1);const viewport=page.getViewport({scale:2.5});const canvas=document.createElement("canvas");canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);await page.render({canvasContext:ctx,viewport}).promise;const {data,width,height}=ctx.getImageData(0,0,canvas.width,canvas.height);let minX=width,minY=height,maxX=-1,maxY=-1;const step=2;for(let y=0;y<height;y+=step){for(let x=0;x<width;x+=step){const i=(y*width+x)*4;const darkness=255-Math.min(data[i],data[i+1],data[i+2]);if(darkness>24){if(x<minX)minX=x;if(y<minY)minY=y;if(x>maxX)maxX=x;if(y>maxY)maxY=y;}}}if(maxX<0||maxY<0)throw new Error("Geen labelinhoud gevonden in de PDF.");const pad=Math.max(10,Math.round(Math.min(width,height)*0.006));minX=Math.max(0,minX-pad);minY=Math.max(0,minY-pad);maxX=Math.min(width-1,maxX+pad);maxY=Math.min(height-1,maxY+pad);const crop=document.createElement("canvas");crop.width=maxX-minX+1;crop.height=maxY-minY+1;crop.getContext("2d").drawImage(canvas,minX,minY,crop.width,crop.height,0,0,crop.width,crop.height);const rotated=document.createElement("canvas");rotated.width=crop.height;rotated.height=crop.width;const rctx=rotated.getContext("2d");rctx.translate(rotated.width/2,rotated.height/2);rctx.rotate(Math.PI/2);rctx.drawImage(crop,-crop.width/2,-crop.height/2);const image=rotated.toDataURL("image/png");const pdf=new jspdf.jsPDF({orientation:"portrait",unit:"mm",format:[104,159],compress:true});const scale=Math.min(104/rotated.width,159/rotated.height);const w=rotated.width*scale,h=rotated.height*scale;pdf.addImage(image,"PNG",(104-w)/2,(159-h)/2,w,h,undefined,"FAST");return pdf.output("blob");}
+async function registerShipment(order,labelId,button){if(!confirm("Zending definitief bij bol.com registreren? De labelkost wordt hiermee geactiveerd."))return;button.disabled=true;button.textContent="Zending registreren…";try{const result=await api("/api/shipments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderItems:getItems(order),shippingLabelId:labelId})});if(!result.processStatusId)throw new Error("Bol.com gaf geen processStatusId terug.");const status=await pollProcess(result.processStatusId);if(status.status!=="SUCCESS")throw new Error(status.errorMessage||("Zendingstatus: "+status.status));button.textContent="Zending geregistreerd";button.disabled=true;button.classList.add("success");addText(button.parentElement,"p","Bol.com heeft de zending geregistreerd. Shipment ID: "+(status.entityId||"ontvangen"),"small success");}catch(e){alert("Registreren is niet bevestigd: "+e.message);button.disabled=false;button.textContent="Opnieuw proberen";}}
+async function loadOrders(){if(!appToken){setTokenUI(true);$("ordersMessage").textContent="Vul eerst je APP_ACCESS_TOKEN in.";return;}const b=$("loadOrders");b.disabled=true;b.textContent="Bestellingen ophalen…";$("ordersTag").textContent="Verbinden…";$("orderList").replaceChildren();try{const data=await api("/api/orders?status=OPEN&fulfilment-method=FBR&page=1");const orders=data.orders||[];$("ordersCount").textContent=String(orders.length);$("ordersTag").textContent="Verbonden";$("ordersMessage").textContent=orders.length?"Selecteer per bestelling de verzendopties.":"Geen open FBR-bestellingen gevonden.";setStatus("Bol.com verbonden","good");setTokenUI(false);for(const order of orders){const card=addText($("orderList"),"article","","order");const title=addText(card,"div","Bestelling "+(order.orderId||"—"),"order-title");const items=getItems(order);const details=(order.orderItems||[]).map(i=>((i.product&&i.product.title)||i.title||i.ean||"Artikel")+" × "+(i.quantity||1)).join(" · ");addText(card,"div",details||"Geen orderitems gevonden","order-meta");const actions=addText(card,"div","","order-actions");const opt=addText(actions,"button","Verzendopties ophalen","secondary");opt.type="button";opt.disabled=!items.length;opt.addEventListener("click",()=>loadDeliveryOptions(order,card,opt));addText(card,"div","","options-area");addText(card,"div","","label-area");} }catch(e){$("ordersTag").textContent="Fout";$("ordersMessage").textContent=e.message;setStatus("Backendverbinding mislukt","bad");if(e.message.includes("401"))setTokenUI(true);}finally{b.disabled=false;b.textContent="Open bestellingen ophalen";}}
+$("loadOrders").addEventListener("click",loadOrders);
+if("serviceWorker"in navigator&&location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 </script>
 </body>
 </html>
