@@ -154,6 +154,10 @@ export default {
       }
     }
 
+    if (!url.pathname.startsWith("/api/") && (request.method === "GET" || request.method === "HEAD") && env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
     return json({ error: "Endpoint niet gevonden." }, 404, allowedOrigin);
   }
 };
