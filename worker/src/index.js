@@ -105,6 +105,16 @@ export default {
       return json({ error: "Origin not allowed." }, 403, allowedOrigin);
     }
 
+    if (url.pathname === "/api/auth-check" && request.method === "GET") {
+      const header = request.headers.get("Authorization") || "";
+      const supplied = header.startsWith("Bearer ") ? header.slice(7) : "";
+      return json({
+        authorized: isAuthorized(request, env),
+        appAccessTokenConfigured: Boolean(env.APP_ACCESS_TOKEN),
+        authorizationHeaderReceived: Boolean(supplied)
+      }, 200, allowedOrigin);
+    }
+
     if (url.pathname === "/api/orders" && request.method === "GET") {
       if (!isAuthorized(request, env)) {
         return json({ error: "Niet aangemeld. Controleer je app-toegangscode." }, 401, allowedOrigin);
