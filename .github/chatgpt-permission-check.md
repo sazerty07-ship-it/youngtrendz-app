@@ -1,0 +1,1 @@
+Temporary check that the GitHub integration can write repository contents.
