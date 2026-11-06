@@ -127,20 +127,20 @@
     saveButton.textContent = "Toegang controleren…";
     ordersMessage.textContent = "Ik controleer of de toegangscode door de backend wordt aanvaard…";
     try {
-      const response = await fetch(API_BASE + "/api/orders?status=OPEN&fulfilment-method=FBR&page=1", {
+      const response = await fetch(API_BASE + "/api/auth-check", {
         headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
         cache: "no-store"
       });
       const data = await response.json().catch(() => ({}));
-      if (response.status === 401) throw new Error("De backend weigert deze code (401). Controleer de APP_ACCESS_TOKEN bij Runtime Secrets van de juiste Worker.");
+      if (!response.ok || !data.authorized) {
+        const details = " Secret ingesteld op Worker: " + (data.appAccessTokenConfigured ? "JA" : "NEE") +
+          ". Authorization-header ontvangen: " + (data.authorizationHeaderReceived ? "JA" : "NEE") + ".";
+        throw new Error("Toegangscode niet aanvaard." + details + " Controleer dat APP_ACCESS_TOKEN als Runtime Secret op Worker youngtrendz-app staat en exact overeenkomt.");
+      }
       localStorage.setItem("yt-app-token", token);
       showTokenSettings(false);
       statusText.textContent = "Toegangscode aanvaard";
-      if (response.ok) {
-        ordersMessage.textContent = "Toegangscode gecontroleerd en bewaard. Je hoeft deze niet opnieuw in te vullen.";
-      } else {
-        ordersMessage.textContent = "De toegangscode is aanvaard en bewaard. De backend meldt nog wel: " + (data.error || ("HTTP " + response.status));
-      }
+      ordersMessage.textContent = "Toegangscode gecontroleerd en bewaard. Je hoeft deze niet opnieuw in te vullen.";
     } catch (error) {
       ordersMessage.textContent = error.message || "Opslaan is niet gelukt. Controleer de browserinstellingen.";
     } finally {
