@@ -1,7 +1,7 @@
 const BOL_TOKEN_URL = "https://login.bol.com/token";
 const BOL_API_URL = "https://api.bol.com/retailer";
 const BOL_MEDIA_TYPE = "application/vnd.retailer.v10+json";
-const ALLOWED_ORIGIN = "https://sazerty07-ship-it.github.io";
+const ALLOWED_ORIGINS = new Set(["https://sazerty07-ship-it.github.io", "https://youngtrendz-app.s-azerty07.workers.dev"]);
 
 let cachedBolToken = null;
 let cachedBolTokenExpiresAt = 0;
@@ -88,10 +88,10 @@ function isAuthorized(request, env) {
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    const allowedOrigin = origin === ALLOWED_ORIGIN ? origin : ALLOWED_ORIGIN;
+    const allowedOrigin = ALLOWED_ORIGINS.has(origin) ? origin : "https://sazerty07-ship-it.github.io";
 
     if (request.method === "OPTIONS") {
-      if (origin !== ALLOWED_ORIGIN) return new Response(null, { status: 403 });
+      if (!ALLOWED_ORIGINS.has(origin)) return new Response(null, { status: 403 });
       return new Response(null, { status: 204, headers: corsHeaders(allowedOrigin) });
     }
 
@@ -101,7 +101,7 @@ export default {
       return json({ ok: true, service: "youngtrendz-bol-backend", mode: "read-only-orders" }, 200, allowedOrigin);
     }
 
-    if (origin && origin !== ALLOWED_ORIGIN) {
+    if (origin && !ALLOWED_ORIGINS.has(origin)) {
       return json({ error: "Origin not allowed." }, 403, allowedOrigin);
     }
 
