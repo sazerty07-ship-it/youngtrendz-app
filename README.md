@@ -37,3 +37,17 @@ An iPhone browser/PWA cannot be assumed to have unrestricted Bluetooth printer a
 2. Implement backend OAuth and order retrieval.
 3. Add duplicate prevention and shipment-state checks before purchasing/registering labels.
 4. Build and test the local print bridge against the exact printer model and firmware.
+
+
+## Product Tracker
+
+The Product Tracker stores daily competitor-offer snapshots in Cloudflare D1. It records the current buy-box offer, price, retailer identifier and number of active offers. It does **not** claim to know competitor unit sales or stock quantity: those are not provided by the official competing-offers API.
+
+Before enabling the tracker:
+
+1. Create a Cloudflare D1 database named `youngtrendz-tracker`.
+2. Add it to the Worker as a D1 binding named `DB` (the database ID must also be added to `worker/wrangler.toml`).
+3. Apply `worker/migrations/0001_product_tracker.sql` to that database.
+4. The Worker cron runs daily at 05:00 UTC.
+
+The basket-quantity measurement is a separate integration and must be validated against bol.com's current storefront before estimated sales can be displayed.
