@@ -19,7 +19,7 @@ h1{font-size:clamp(27px,7vw,36px);line-height:1.12;letter-spacing:-1px;margin:12
 .small{font-size:12px;color:var(--muted)}.muted{color:var(--muted)}.notice{border-left:3px solid var(--warn);padding:10px 12px;background:#2a251b;border-radius:8px;color:#e9d8b2;font-size:12px;margin-top:12px}
 input.secret{width:100%;background:#0c1625;border:1px solid var(--line);border-radius:10px;padding:13px;color:var(--text);font:inherit;margin:8px 0}
 button{font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.primary{width:100%;border:0;border-radius:11px;background:var(--accent);color:#071321;padding:13px 15px;font-weight:800;font-size:14px;margin-top:10px}.secondary{border:1px solid var(--line);background:#0c1625;color:var(--text);border-radius:10px;padding:9px 12px;font-weight:650}.tiny{padding:7px 10px;font-size:12px}
-.order-list{display:grid;gap:10px;margin-top:13px}.order{padding:13px;background:#0c1625;border:1px solid var(--line);border-radius:12px}.order-title{font-weight:800}.order-meta{font-size:12px;color:var(--muted);margin-top:4px}.order-items{display:grid;gap:5px;margin-top:8px}.order-item{font-size:13px;color:var(--text);padding-left:10px;border-left:2px solid var(--line)}.order-item .small{display:block;margin-top:1px}.order-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.options{display:grid;gap:8px;margin-top:10px}.shipping-option{border:1px solid var(--line);background:#111e30;border-radius:10px;padding:11px;text-align:left;color:var(--text);width:100%}.shipping-option.selected{border-color:var(--accent);background:#173149}.price{font-weight:800;color:var(--accent)}.recommended{font-size:10px;color:var(--good);margin-left:5px}
+.order-list{display:grid;gap:10px;margin-top:13px}.order{padding:13px;background:#0c1625;border:1px solid var(--line);border-radius:12px}.order-title{font-weight:800}.order-meta{font-size:12px;color:var(--muted);margin-top:4px}.order-items{display:grid;gap:5px;margin-top:8px}.order-item{font-size:13px;color:var(--text);padding-left:10px;border-left:2px solid var(--line)}.order-item .small{display:block;margin-top:1px}.shipping-block{margin-top:10px;padding:10px 11px;background:#142238;border:1px solid var(--line);border-radius:10px;font-size:13px}.shipping-title{font-size:11px;color:var(--accent);font-weight:800;letter-spacing:.5px;margin-bottom:4px}.shipping-block .small{display:block;margin-top:3px}.order-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.options{display:grid;gap:8px;margin-top:10px}.shipping-option{border:1px solid var(--line);background:#111e30;border-radius:10px;padding:11px;text-align:left;color:var(--text);width:100%}.shipping-option.selected{border-color:var(--accent);background:#173149}.price{font-weight:800;color:var(--accent)}.recommended{font-size:10px;color:var(--good);margin-left:5px}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.stat{padding:12px;background:#0c1625;border:1px solid var(--line);border-radius:12px}.stat small{display:block;color:var(--muted);font-size:11px}.stat b{font-size:22px;display:block;margin-top:2px}
 .hidden{display:none!important}.success{color:var(--good)}.error{color:var(--bad)}.label-panel{margin-top:12px;padding:12px;background:#142a28;border:1px solid #31584c;border-radius:11px}.label-panel button{margin-top:8px}
 footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
@@ -85,7 +85,7 @@ $("saveToken").addEventListener("click",async()=>{const token=$("appToken").valu
 function getItems(order){return (order.orderItems||[]).filter(i=>i.orderItemId).map(i=>({orderItemId:String(i.orderItemId),quantity:Number(i.quantity||1)}));}
 function addText(parent,tag,text,className){const el=document.createElement(tag);el.textContent=text;if(className)el.className=className;parent.append(el);return el;}
 function money(v){if(v===undefined||v===null)return "Prijs niet vermeld";return new Intl.NumberFormat("nl-BE",{style:"currency",currency:"EUR"}).format(Number(v));}
-async function loadOrderProductDetails(order,itemsBox){
+async function loadOrderProductDetails(order,itemsBox,shippingBox){
  try{
   const detail=await api("/api/orders/"+encodeURIComponent(order.orderId));
   const detailedItems=detail.orderItems||[];
@@ -158,7 +158,7 @@ for(const order of orders){
    line.dataset.orderItemId=String(item.orderItemId||"");
   }
   addText(itemsBox,"div","Productnamen ophalen…","small product-loading");
-  detailQueue.push({order,itemsBox});
+  detailQueue.push({order,itemsBox,shippingBox});
  }
  const actions=addText(card,"div","","order-actions");
  const opt=addText(actions,"button","Verzendopties ophalen","secondary");
@@ -169,7 +169,7 @@ for(const order of orders){
 const detailWorkers=Array.from({length:4},async()=>{
  while(detailQueue.length){
   const task=detailQueue.shift();
-  await loadOrderProductDetails(task.order,task.itemsBox);
+  await loadOrderProductDetails(task.order,task.itemsBox,task.shippingBox);
  }
 });
 await Promise.all(detailWorkers);
