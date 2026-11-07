@@ -9,7 +9,7 @@ directory = "./public"
 binding = "ASSETS"
 run_worker_first = ["/api/*", "/health"]
 
-[observability]
+[triggers]\ncrons = ["0 5 * * *"]\n\n[observability]
 enabled = true
 
 # Configure these as encrypted Secrets in Cloudflare:
