@@ -162,7 +162,7 @@ async function upstreamJson(response, origin, label) {
   return json(data, response.status, origin);
 }
 
-export default {
+export default {\n  async scheduled(controller, env, ctx) { ctx.waitUntil(runDailyTracker(env)); },
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
     const allowedOrigin = ALLOWED_ORIGINS.has(origin) ? origin : "https://sazerty07-ship-it.github.io";
