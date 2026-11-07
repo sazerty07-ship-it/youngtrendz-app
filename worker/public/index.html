@@ -24,6 +24,8 @@ button{font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.prima
 .hidden{display:none!important}.success{color:var(--good)}.error{color:var(--bad)}.label-panel{margin-top:12px;padding:12px;background:#142a28;border:1px solid #31584c;border-radius:11px}.label-panel button{margin-top:8px}
 footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
 @media(max-width:390px){.card{padding:14px}.order-actions>*{flex:1}}
+
+.product-form{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}.tracker-input{width:100%;background:#0c1625;border:1px solid var(--line);border-radius:10px;padding:12px;color:var(--text);font:inherit}.tracker-products{display:grid;gap:10px;margin-top:12px}.tracker-product{padding:12px;background:#0c1625;border:1px solid var(--line);border-radius:12px}.tracker-product-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.tracker-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.tracker-metric{background:#142238;border-radius:9px;padding:8px}.tracker-metric b{display:block;font-size:17px}.tracker-metric small{font-size:10px;color:var(--muted)}.tracker-offers{margin-top:9px;font-size:12px;color:var(--muted)}.tracker-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.tracker-history{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:12px;color:var(--muted)}.tracker-bar{height:6px;border-radius:8px;background:#263b53;overflow:hidden;margin-top:5px}.tracker-bar span{display:block;height:100%;background:var(--accent)}
 </style>
 </head>
 <body>
@@ -122,7 +124,62 @@ async function loadOrderProductDetails(order,itemsBox,shippingBox){
   if(loading)loading.textContent="Productnamen konden niet worden opgehaald. EAN en aantallen worden hierboven getoond.";
  }
 }
-let desktopPrintersReady=Promise.resolve();
+
+async function trackerApi(path,options={}){return api(path,options);}
+function trackerMessage(message,kind=""){const el=$("trackerMessage");el.textContent=message;el.className="small"+(kind?" "+kind:"");}
+function euro(value){return value==null?"—":new Intl.NumberFormat("nl-BE",{style:"currency",currency:"EUR"}).format(value);}
+function renderTrackerProducts(products){
+ const root=$("trackerProducts");root.replaceChildren();
+ if(!products.length){addText(root,"p","Voeg hierboven een EAN toe om een product te volgen.","small");return;}
+ for(const p of products){
+  const card=document.createElement("div");card.className="tracker-product";
+  const head=document.createElement("div");head.className="tracker-product-head";
+  const title=document.createElement("div");title.style.fontWeight="800";title.textContent=p.title||("EAN "+p.ean);
+  const tag=document.createElement("span");tag.className="tag";tag.textContent=p.countryCode||"BE";
+  head.append(title,tag);card.append(head);
+  addText(card,"div","EAN "+p.ean,"small");
+  const metrics=document.createElement("div");metrics.className="tracker-metrics";
+  for(const [label,value] of [["Koopblokprijs",euro(p.latest?.bestPrice)],["Aanbiedingen",p.latest?.offerCount??"—"],["Koopblokverkoper",p.latest?.bestRetailerName||"—"]]){
+   const m=document.createElement("div");m.className="tracker-metric";addText(m,"b",String(value));addText(m,"small",label);metrics.append(m);
+  }
+  card.append(metrics);
+  if(p.latest?.observedAt)addText(card,"div","Laatst gemeten: "+new Date(p.latest.observedAt).toLocaleString("nl-BE"),"tracker-history");
+  const actions=document.createElement("div");actions.className="tracker-actions";
+  const refresh=document.createElement("button");refresh.className="secondary tiny";refresh.textContent="Nu meten";refresh.addEventListener("click",()=>refreshTrackedProduct(p.id,refresh));
+  const history=document.createElement("button");history.className="secondary tiny";history.textContent="Historiek";history.addEventListener("click",()=>showTrackerHistory(p.id,card));
+  const remove=document.createElement("button");remove.className="secondary tiny";remove.textContent="Verwijderen";remove.addEventListener("click",()=>deleteTrackedProduct(p.id));
+  actions.append(refresh,history,remove);card.append(actions);root.append(card);
+ }
+}
+async function loadTrackedProducts(){
+ try{const data=await trackerApi("/api/tracker/products");renderTrackerProducts(data.products||[]);if(!(data.products||[]).length)trackerMessage("Nog geen producten gevolgd.");}
+ catch(e){trackerMessage("Product Tracker niet beschikbaar: "+e.message,"error");}
+}
+async function addTrackedProduct(){
+ const ean=$("trackerEan").value.replace(/\D/g,"");const title=$("trackerTitle").value.trim();
+ if(!/^\d{8,14}$/.test(ean)){trackerMessage("Vul een geldige EAN-code in (8 tot 14 cijfers).","error");return;}
+ const b=$("trackerAdd");b.disabled=true;b.textContent="Toevoegen…";
+ try{await trackerApi("/api/tracker/products",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ean,title,countryCode:"BE"})});$("trackerEan").value="";$("trackerTitle").value="";trackerMessage("Product toegevoegd. Eerste meting wordt uitgevoerd…","success");await loadTrackedProducts();const d=await trackerApi("/api/tracker/products");const p=(d.products||[]).find(x=>x.ean===ean);if(p)await refreshTrackedProduct(p.id,null);}
+ catch(e){trackerMessage(e.message,"error");}
+ finally{b.disabled=false;b.textContent="Product toevoegen";}
+}
+async function refreshTrackedProduct(id,button){
+ if(button){button.disabled=true;button.textContent="Meten…";}
+ try{const data=await trackerApi("/api/tracker/products/"+encodeURIComponent(id)+"/refresh",{method:"POST"});trackerMessage(data.message||"Meting opgeslagen.","success");await loadTrackedProducts();}
+ catch(e){trackerMessage("Meting mislukt: "+e.message,"error");}
+ finally{if(button){button.disabled=false;button.textContent="Nu meten";}}
+}
+async function deleteTrackedProduct(id){
+ if(!confirm("Dit product uit je tracker verwijderen?"))return;
+ try{await trackerApi("/api/tracker/products/"+encodeURIComponent(id),{method:"DELETE"});await loadTrackedProducts();trackerMessage("Product verwijderd.");}
+ catch(e){trackerMessage(e.message,"error");}
+}
+async function showTrackerHistory(id,card){
+ try{const data=await trackerApi("/api/tracker/products/"+encodeURIComponent(id)+"/history");const box=document.createElement("div");box.className="tracker-history";addText(box,"b","Historiek (laatste 30 metingen)");const rows=data.snapshots||[];if(!rows.length)addText(box,"div","Nog geen metingen.");for(const row of rows){const line=document.createElement("div");line.style.marginTop="5px";line.textContent=new Date(row.observedAt).toLocaleString("nl-BE")+" · "+euro(row.bestPrice)+" · "+row.offerCount+" aanbiedingen";box.append(line);}card.querySelector(".tracker-history")?.remove();card.append(box);}
+ catch(e){trackerMessage("Historiek ophalen mislukt: "+e.message,"error");}
+}
+$("trackerAdd").addEventListener("click",addTrackedProduct);
+\nlet desktopPrintersReady=Promise.resolve();
 async function initDesktopPrinting(){
  if(!window.ytDesktop)return;
  const box=$("desktopPrintSettings");box.classList.remove("hidden");
