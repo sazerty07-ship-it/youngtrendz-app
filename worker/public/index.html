@@ -54,8 +54,20 @@ footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
 <div class="order-list" id="orderList" aria-live="polite"></div>
 </section>
 
-<section class="card">
-<div class="card-head"><h2>Printer & etiket</h2><span class="tag">LW650XL PRO</span></div>
+
+<section class="card" id="productTracker">
+ <div class="card-head"><h2>Product Tracker</h2><span class="tag">Concurrentie volgen</span></div>
+ <p class="small">Volg bol.com-producten op basis van EAN. De tracker bewaart dagelijks de koopblokprijs, het aantal aanbiedingen en de verkoper in het koopblok.</p>
+ <div class="product-form">
+  <input class="tracker-input" id="trackerEan" inputmode="numeric" maxlength="14" placeholder="EAN-code van het bol.com-product">
+  <input class="tracker-input" id="trackerTitle" maxlength="120" placeholder="Productnaam (optioneel)">
+  <button class="primary" id="trackerAdd">Product toevoegen</button>
+ </div>
+ <div id="trackerMessage" class="small" style="margin-top:9px">Nog geen producten gevolgd.</div>
+ <div id="trackerProducts" class="tracker-products"></div>
+ <div class="notice">De voorraadhoeveelheid in het winkelmandje is nog niet beschikbaar via de officiële Retailer API. Daarom toont deze eerste versie prijs- en koopblokveranderingen, geen verzonnen voorraad of verkoopaantallen. De winkelmandjesmeting voegen we pas toe zodra die bron betrouwbaar getest is.</div>
+</section>
+<section class="card">\n<div class="card-head"><h2>Printer & etiket</h2><span class="tag">LW650XL PRO</span></div>
 <p class="small">Etiketrol: <b>159 × 104 mm</b>. De printer drukt maximaal 108 mm breed af, dus het label wordt 90° gedraaid naar 104 mm breed en 159 mm lang.</p>
 <p class="small">De app maakt een print-PDF met witte buitenmarges automatisch bijgesneden. Omdat we nog geen voorbeeldlabel hebben kunnen controleren, moet de eerste afdruk als test worden nagekeken.</p>
 <div class="notice">Op iPhone kun je het etiket opslaan en handmatig in Labelife openen. In de Windows-desktopapp kan Young Trendz het etiket rechtstreeks naar de geselecteerde Windows-printer sturen. Daarvoor moet de LW650XL PRO-driver op die pc geïnstalleerd zijn.</div><div id="desktopPrintSettings" class="hidden" style="margin-top:12px"><p class="small success">Windows-desktopapp actief: automatisch afdrukken is beschikbaar.</p><label class="small" for="desktopPrinterSelect">Printer voor verzendlabels</label><select id="desktopPrinterSelect" class="secret" style="width:100%"><option>Printers ophalen…</option></select><p id="desktopPrinterStatus" class="small">Printerverbinding controleren…</p></div>
