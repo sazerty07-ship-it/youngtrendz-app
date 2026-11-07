@@ -212,20 +212,20 @@ export default {\n  async scheduled(controller, env, ctx) { ctx.waitUntil(runDai
       }
       if (url.pathname === "/api/tracker/products" && request.method === "POST") {
         if (!env.DB) return json({ error: "Product Tracker-database is nog niet gekoppeld (D1-binding DB)." },503,allowedOrigin);
-        const body=await readJson(request); const ean=String(body.ean||"").replace(/\\D/g,""); const title=String(body.title||"").trim().slice(0,120); const countryCode=body.countryCode==="NL"?"NL":"BE";
-        if(!/^\\d{8,14}$/.test(ean)) return json({error:"Ongeldige EAN-code."},400,allowedOrigin);
+        const body=await readJson(request); const ean=String(body.ean||"").replace(/\D/g,""); const title=String(body.title||"").trim().slice(0,120); const countryCode=body.countryCode==="NL"?"NL":"BE";
+        if(!/^\d{8,14}$/.test(ean)) return json({error:"Ongeldige EAN-code."},400,allowedOrigin);
         const id=crypto.randomUUID(); const now=new Date().toISOString();
         try{await env.DB.prepare("INSERT INTO tracked_products (id,ean,title,country_code,created_at) VALUES (?,?,?,?,?)").bind(id,ean,title,countryCode,now).run();}
         catch(e){if(String(e.message||e).includes("UNIQUE"))return json({error:"Dit product staat al in je tracker."},409,allowedOrigin);throw e;}
         return json({id,ean,title,countryCode,createdAt:now},201,allowedOrigin);
       }
-      const trackerHistoryMatch=url.pathname.match(/^\\/api\\/tracker\\/products\\/([0-9a-f-]{36})\\/history$/i);
+      const trackerHistoryMatch=url.pathname.match(/^\/api\/tracker\/products\/([0-9a-f-]{36})\/history$/i);
       if(trackerHistoryMatch&&request.method==="GET"){
         if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
         const rows=await env.DB.prepare("SELECT observed_at AS observedAt,best_price AS bestPrice,offer_count AS offerCount,best_retailer_name AS bestRetailerName FROM tracker_snapshots WHERE product_id=? ORDER BY observed_at DESC LIMIT 30").bind(trackerHistoryMatch[1]).all();
         return json({snapshots:rows.results||[]},200,allowedOrigin);
       }
-      const trackerRefreshMatch=url.pathname.match(/^\\/api\\/tracker\\/products\\/([0-9a-f-]{36})\\/refresh$/i);
+      const trackerRefreshMatch=url.pathname.match(/^\/api\/tracker\/products\/([0-9a-f-]{36})\/refresh$/i);
       if(trackerRefreshMatch&&request.method==="POST"){
         if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
         const product=await env.DB.prepare("SELECT * FROM tracked_products WHERE id=?").bind(trackerRefreshMatch[1]).first();
@@ -234,7 +234,7 @@ export default {\n  async scheduled(controller, env, ctx) { ctx.waitUntil(runDai
         await saveTrackerSnapshot(env.DB,product.id,snapshot);
         return json({message:"Meting opgeslagen. Voorraad via winkelmandje is nog niet beschikbaar; dit zijn officiële aanbod- en koopblokgegevens.",snapshot},200,allowedOrigin);
       }
-      const trackerDeleteMatch=url.pathname.match(/^\\/api\\/tracker\\/products\\/([0-9a-f-]{36})$/i);
+      const trackerDeleteMatch=url.pathname.match(/^\/api\/tracker\/products\/([0-9a-f-]{36})$/i);
       if(trackerDeleteMatch&&request.method==="DELETE"){
         if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
         await env.DB.prepare("DELETE FROM tracked_products WHERE id=?").bind(trackerDeleteMatch[1]).run();
