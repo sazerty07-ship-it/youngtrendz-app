@@ -1,6 +1,38 @@
 const BOL_TOKEN_URL = "https://login.bol.com/token";
 const BOL_API_URL = "https://api.bol.com/retailer";
 const BOL_MEDIA_TYPE = "application/vnd.retailer.v10+json";
+
+async function collectTrackerSnapshot(env, product) {
+  const url = BOL_API_URL + "/products/" + encodeURIComponent(product.ean) + "/offers?country-code=" + encodeURIComponent(product.country_code) + "&best-offer-only=false";
+  const response = await bolFetch(env, "/products/" + encodeURIComponent(product.ean) + "/offers?country-code=" + encodeURIComponent(product.country_code) + "&best-offer-only=false");
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("Aanbiedingen ophalen mislukt bij bol.com (HTTP " + response.status + "). Controleer of deze EAN in de catalogus bestaat.");
+  const offers = Array.isArray(data.offers) ? data.offers : [];
+  const normalized = offers.map(o => ({
+    retailerId: o.retailerId ?? o.retailer?.retailerId ?? null,
+    retailerName: o.retailerName ?? o.seller?.name ?? o.retailer?.name ?? null,
+    price: Number(o.price ?? o.pricing?.bundlePrices?.[0]?.unitPrice ?? NaN),
+    bestOffer: Boolean(o.bestOffer),
+    fulfilmentMethod: o.fulfilmentMethod ?? o.fulfilment?.method ?? null,
+    minDeliveryDate: o.minDeliveryDate ?? null,
+    maxDeliveryDate: o.maxDeliveryDate ?? null
+  }));
+  const best = normalized.find(o => o.bestOffer) || normalized.slice().sort((a,b)=>(a.price||Infinity)-(b.price||Infinity))[0] || null;
+  return {observedAt:new Date().toISOString(),bestPrice:Number.isFinite(best?.price)?best.price:null,bestRetailerId:best?.retailerId??null,bestRetailerName:best?.retailerName??null,offerCount:normalized.length,offers:normalized};
+}
+async function saveTrackerSnapshot(db, productId, snapshot) {
+  await db.prepare("INSERT INTO tracker_snapshots (id,product_id,observed_at,best_price,best_retailer_id,best_retailer_name,offer_count,offers_json) VALUES (?,?,?,?,?,?,?,?)")
+    .bind(crypto.randomUUID(),productId,snapshot.observedAt,snapshot.bestPrice,snapshot.bestRetailerId,snapshot.bestRetailerName,snapshot.offerCount,JSON.stringify(snapshot.offers)).run();
+  await db.prepare("UPDATE tracked_products SET last_checked_at=? WHERE id=?").bind(snapshot.observedAt,productId).run();
+}
+async function runDailyTracker(env) {
+  if (!env.DB || !env.BOL_CLIENT_ID || !env.BOL_CLIENT_SECRET) return;
+  const rows = await env.DB.prepare("SELECT * FROM tracked_products").all();
+  for (const product of (rows.results || [])) {
+    try { const snapshot=await collectTrackerSnapshot(env,product); await saveTrackerSnapshot(env.DB,product.id,snapshot); }
+    catch (error) { console.error("Product tracker daily check failed",product.ean,String(error)); }
+  }
+}
 const ALLOWED_ORIGINS = new Set([
   "https://sazerty07-ship-it.github.io",
   "https://youngtrendz-app.s-azerty07.workers.dev"
@@ -171,6 +203,44 @@ export default {
     }
 
     try {
+
+      // Product Tracker: competitor offer snapshots. Requires a D1 binding named DB.
+      if (url.pathname === "/api/tracker/products" && request.method === "GET") {
+        if (!env.DB) return json({ error: "Product Tracker-database is nog niet gekoppeld (D1-binding DB)." }, 503, allowedOrigin);
+        const rows = await env.DB.prepare("SELECT p.id,p.ean,p.title,p.country_code AS countryCode,p.created_at AS createdAt,s.best_price AS bestPrice,s.offer_count AS offerCount,s.best_retailer_name AS bestRetailerName,s.observed_at AS observedAt FROM tracked_products p LEFT JOIN tracker_snapshots s ON s.id=(SELECT id FROM tracker_snapshots WHERE product_id=p.id ORDER BY observed_at DESC LIMIT 1) ORDER BY p.created_at DESC").all();
+        return json({ products: (rows.results || []).map(r => ({ id:r.id,ean:r.ean,title:r.title,countryCode:r.countryCode,createdAt:r.createdAt,latest:r.observedAt?{bestPrice:r.bestPrice,offerCount:r.offerCount,bestRetailerName:r.bestRetailerName,observedAt:r.observedAt}:null })) },200,allowedOrigin);
+      }
+      if (url.pathname === "/api/tracker/products" && request.method === "POST") {
+        if (!env.DB) return json({ error: "Product Tracker-database is nog niet gekoppeld (D1-binding DB)." },503,allowedOrigin);
+        const body=await readJson(request); const ean=String(body.ean||"").replace(/\\D/g,""); const title=String(body.title||"").trim().slice(0,120); const countryCode=body.countryCode==="NL"?"NL":"BE";
+        if(!/^\\d{8,14}$/.test(ean)) return json({error:"Ongeldige EAN-code."},400,allowedOrigin);
+        const id=crypto.randomUUID(); const now=new Date().toISOString();
+        try{await env.DB.prepare("INSERT INTO tracked_products (id,ean,title,country_code,created_at) VALUES (?,?,?,?,?)").bind(id,ean,title,countryCode,now).run();}
+        catch(e){if(String(e.message||e).includes("UNIQUE"))return json({error:"Dit product staat al in je tracker."},409,allowedOrigin);throw e;}
+        return json({id,ean,title,countryCode,createdAt:now},201,allowedOrigin);
+      }
+      const trackerHistoryMatch=url.pathname.match(/^\\/api\\/tracker\\/products\\/([0-9a-f-]{36})\\/history$/i);
+      if(trackerHistoryMatch&&request.method==="GET"){
+        if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
+        const rows=await env.DB.prepare("SELECT observed_at AS observedAt,best_price AS bestPrice,offer_count AS offerCount,best_retailer_name AS bestRetailerName FROM tracker_snapshots WHERE product_id=? ORDER BY observed_at DESC LIMIT 30").bind(trackerHistoryMatch[1]).all();
+        return json({snapshots:rows.results||[]},200,allowedOrigin);
+      }
+      const trackerRefreshMatch=url.pathname.match(/^\\/api\\/tracker\\/products\\/([0-9a-f-]{36})\\/refresh$/i);
+      if(trackerRefreshMatch&&request.method==="POST"){
+        if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
+        const product=await env.DB.prepare("SELECT * FROM tracked_products WHERE id=?").bind(trackerRefreshMatch[1]).first();
+        if(!product)return json({error:"Product niet gevonden."},404,allowedOrigin);
+        const snapshot=await collectTrackerSnapshot(env,product);
+        await saveTrackerSnapshot(env.DB,product.id,snapshot);
+        return json({message:"Meting opgeslagen. Voorraad via winkelmandje is nog niet beschikbaar; dit zijn officiële aanbod- en koopblokgegevens.",snapshot},200,allowedOrigin);
+      }
+      const trackerDeleteMatch=url.pathname.match(/^\\/api\\/tracker\\/products\\/([0-9a-f-]{36})$/i);
+      if(trackerDeleteMatch&&request.method==="DELETE"){
+        if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
+        await env.DB.prepare("DELETE FROM tracked_products WHERE id=?").bind(trackerDeleteMatch[1]).run();
+        return json({ok:true},200,allowedOrigin);
+      }
+
       const orderDetailMatch = url.pathname.match(/^\/api\/orders\/([A-Za-z0-9-]{1,40})$/);
       if (orderDetailMatch && request.method === "GET") {
         const response = await bolFetch(env, "/orders/" + encodeURIComponent(orderDetailMatch[1]));
