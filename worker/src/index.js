@@ -10,7 +10,7 @@ async function collectTrackerSnapshot(env, product) {
   const offers = Array.isArray(data.offers) ? data.offers : [];
   const normalized = offers.map(o => ({
     retailerId: o.retailerId ?? o.retailer?.retailerId ?? null,
-    retailerName: o.retailerName ?? o.seller?.name ?? o.retailer?.name ?? null,
+    retailerName: o.retailerName ?? o.seller?.name ?? o.retailer?.name ?? (o.retailerId ? "Verkoper " + o.retailerId : null),
     price: Number(o.price ?? o.pricing?.bundlePrices?.[0]?.unitPrice ?? NaN),
     bestOffer: Boolean(o.bestOffer),
     fulfilmentMethod: o.fulfilmentMethod ?? o.fulfilment?.method ?? null,
