@@ -171,6 +171,12 @@ export default {
     }
 
     try {
+      const orderDetailMatch = url.pathname.match(/^\/api\/orders\/([A-Za-z0-9-]{1,40})$/);
+      if (orderDetailMatch && request.method === "GET") {
+        const response = await bolFetch(env, "/orders/" + encodeURIComponent(orderDetailMatch[1]));
+        return await upstreamJson(response, allowedOrigin, "Besteldetails ophalen");
+      }
+
       if (url.pathname === "/api/orders" && request.method === "GET") {
         const status = url.searchParams.get("status") || "OPEN";
         const fulfilment = url.searchParams.get("fulfilment-method") || "FBR";
