@@ -88,6 +88,17 @@ function money(v){if(v===undefined||v===null)return "Prijs niet vermeld";return 
 async function loadOrderProductDetails(order,itemsBox,shippingBox){
  try{
   const detail=await api("/api/orders/"+encodeURIComponent(order.orderId));
+  const recipient=detail.shipmentDetails||{};
+  const fullName=[recipient.firstName,recipient.surname].filter(Boolean).join(" ").trim();
+  const street=[recipient.streetName,[recipient.houseNumber,recipient.houseNumberExtension].filter(Boolean).join("")].filter(Boolean).join(" ");
+  const addressLines=[recipient.company,fullName,street,recipient.extraAddressInformation,[recipient.zipCode,recipient.city].filter(Boolean).join(" "),recipient.countryCode].filter(Boolean);
+  shippingBox.replaceChildren();
+  addText(shippingBox,"div",recipient.pickupPointName||"VERZENDGEGEVENS","shipping-title");
+  if(addressLines.length){
+   addressLines.forEach((value,index)=>addText(shippingBox,"div",value,index===0?"":"small"));
+  }else{
+   addText(shippingBox,"div","Adresgegevens niet beschikbaar of door de klant afgeschermd.","small");
+  }
   const detailedItems=detail.orderItems||[];
   const byId=new Map(detailedItems.map(item=>[String(item.orderItemId),item]));
   for(const line of itemsBox.querySelectorAll(".order-item")){
@@ -103,6 +114,7 @@ async function loadOrderProductDetails(order,itemsBox,shippingBox){
   const loading=itemsBox.querySelector(".product-loading");
   if(loading)loading.remove();
  }catch(error){
+  addText(shippingBox,"div","Verzendgegevens konden niet worden opgehaald.","small error");
   const loading=itemsBox.querySelector(".product-loading");
   if(loading)loading.textContent="Productnamen konden niet worden opgehaald. EAN en aantallen worden hierboven getoond.";
  }
