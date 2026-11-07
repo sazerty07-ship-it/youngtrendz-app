@@ -260,7 +260,7 @@ const detailWorkers=Array.from({length:4},async()=>{
 });
 await Promise.all(detailWorkers);
 $("ordersMessage").textContent=orders.length?"Bestellingen en productnamen geladen. Selecteer per bestelling de verzendopties.":"Geen open FBR-bestellingen gevonden."; }catch(e){$("ordersTag").textContent="Fout";$("ordersMessage").textContent=e.message;setStatus("Backendverbinding mislukt","bad");if(e.message.includes("401"))setTokenUI(true);}finally{b.disabled=false;b.textContent="Open bestellingen ophalen";}}
-$("loadOrders").addEventListener("click",loadOrders);
+$("loadOrders").addEventListener("click",loadOrders);\nif(appToken)loadTrackedProducts();
 initDesktopPrinting();
 if("serviceWorker"in navigator&&location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 </script>
