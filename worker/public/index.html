@@ -163,6 +163,8 @@ for(const order of orders){
  addText(card,"div","Bestelling "+(order.orderId||"—"),"order-title");
  const items=getItems(order);
  const itemsBox=addText(card,"div","","order-items");
+ const shippingBox=addText(card,"div","","shipping-block");
+ addText(shippingBox,"div","Verzendgegevens ophalen…","small");
  if(!items.length){addText(itemsBox,"div","Geen bestelartikelen gevonden.","order-meta");}
  else{
   for(const item of order.orderItems||[]){
