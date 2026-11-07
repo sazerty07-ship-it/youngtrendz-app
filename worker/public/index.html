@@ -91,10 +91,13 @@ async function loadOrderProductDetails(order,itemsBox,shippingBox){
   const recipient=detail.shipmentDetails||{};
   const fullName=[recipient.firstName,recipient.surname].filter(Boolean).join(" ").trim();
   const street=[recipient.streetName,[recipient.houseNumber,recipient.houseNumberExtension].filter(Boolean).join("")].filter(Boolean).join(" ");
-  const addressLines=[recipient.company,fullName,street,recipient.extraAddressInformation,[recipient.zipCode,recipient.city].filter(Boolean).join(" "),recipient.countryCode].filter(Boolean);
+  const addressLines=[fullName,recipient.company,street,recipient.extraAddressInformation,[recipient.zipCode,recipient.city].filter(Boolean).join(" "),recipient.countryCode].filter(Boolean);
+  const isAnonymised=Object.values(recipient).some(value=>value==="ANONYMISED");
   shippingBox.replaceChildren();
   addText(shippingBox,"div",recipient.pickupPointName||"VERZENDGEGEVENS","shipping-title");
-  if(addressLines.length){
+  if(isAnonymised){
+   addText(shippingBox,"div","De klant heeft de persoonlijke adresgegevens afgeschermd.","small");
+  }else if(addressLines.length){
    addressLines.forEach((value,index)=>addText(shippingBox,"div",value,index===0?"":"small"));
   }else{
    addText(shippingBox,"div","Adresgegevens niet beschikbaar of door de klant afgeschermd.","small");
