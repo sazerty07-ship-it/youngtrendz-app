@@ -238,7 +238,8 @@ export default {
       const trackerDeleteMatch=url.pathname.match(/^\/api\/tracker\/products\/([0-9a-f-]{36})$/i);
       if(trackerDeleteMatch&&request.method==="DELETE"){
         if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
-        await env.DB.prepare("DELETE FROM tracker_snapshots WHERE product_id=?").bind(trackerDeleteMatch[1]).run();\n        await env.DB.prepare("DELETE FROM tracked_products WHERE id=?").bind(trackerDeleteMatch[1]).run();
+        await env.DB.prepare("DELETE FROM tracker_snapshots WHERE product_id=?").bind(trackerDeleteMatch[1]).run();
+        await env.DB.prepare("DELETE FROM tracked_products WHERE id=?").bind(trackerDeleteMatch[1]).run();
         return json({ok:true},200,allowedOrigin);
       }
 
