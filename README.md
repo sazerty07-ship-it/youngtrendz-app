@@ -51,3 +51,8 @@ Before enabling the tracker:
 4. The Worker cron runs daily at 05:00 UTC.
 
 The basket-quantity measurement is a separate integration and must be validated against bol.com's current storefront before estimated sales can be displayed.
+
+
+## Category tracking
+
+After migration 0001, apply `worker/migrations/0002_category_tracker.sql`. Up to three search terms can be followed; each daily sync imports at most 50 popular Belgian results per term. Daily offer snapshots are capped at 150 products. Stopping a category keeps discovered products in the regular tracker.
