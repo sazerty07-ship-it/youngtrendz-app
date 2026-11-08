@@ -27,7 +27,7 @@ async function saveTrackerSnapshot(db, productId, snapshot) {
 }
 
 async function syncTrackerCategory(env, category) {
-  const response = await bolFetch(env, "/products/list", { method: "POST", body: JSON.stringify({ countryCode: "BE", searchTerm: category.search_term, sort: "POPULARITY", page: 1 }) });
+  const response = await bolFetch(env, "/products/list", { method: "POST", headers: { "Content-Type": "application/json", "Accept-Language": "nl-BE" }, body: JSON.stringify({ countryCode: "BE", searchTerm: category.search_term, sort: "POPULARITY", page: 1 }) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error("Categorie ophalen mislukt bij bol.com (HTTP " + response.status + ").");
   const products = Array.isArray(data.products) ? data.products.slice(0,50) : [];
