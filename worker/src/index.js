@@ -25,9 +25,33 @@ async function saveTrackerSnapshot(db, productId, snapshot) {
     .bind(crypto.randomUUID(),productId,snapshot.observedAt,snapshot.bestPrice,snapshot.bestRetailerId,snapshot.bestRetailerName,snapshot.offerCount,JSON.stringify(snapshot.offers)).run();
   await db.prepare("UPDATE tracked_products SET last_checked_at=? WHERE id=?").bind(snapshot.observedAt,productId).run();
 }
+
+async function syncTrackerCategory(env, category) {
+  const response = await bolFetch(env, "/products/list", { method: "POST", body: JSON.stringify({ countryCode: "BE", searchTerm: category.search_term, sort: "POPULARITY", page: 1 }) });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error("Categorie ophalen mislukt bij bol.com (HTTP " + response.status + ").");
+  const products = Array.isArray(data.products) ? data.products.slice(0,50) : [];
+  let added = 0;
+  for (const item of products) {
+    const eans = Array.isArray(item.eans) ? item.eans : [];
+    const first = eans[0];
+    const ean = String(typeof first === "string" ? first : (first?.ean || item.ean || "")).replace(/\D/g,"");
+    if (!/^\d{8,14}$/.test(ean)) continue;
+    const result = await env.DB.prepare("INSERT OR IGNORE INTO tracked_products (id,ean,title,country_code,created_at,source_category) VALUES (?,?,?,?,?,?)")
+      .bind(crypto.randomUUID(),ean,String(item.title||"").slice(0,120),"BE",new Date().toISOString(),category.id).run();
+    added += Number(result.meta?.changes || 0);
+  }
+  const count = await env.DB.prepare("SELECT COUNT(*) AS total FROM tracked_products WHERE source_category=?").bind(category.id).first();
+  const syncedAt = new Date().toISOString();
+  await env.DB.prepare("UPDATE tracker_categories SET last_synced_at=?,product_count=? WHERE id=?").bind(syncedAt,Number(count?.total||0),category.id).run();
+  return { found:products.length, added, productCount:Number(count?.total||0), syncedAt };
+}
+
 async function runDailyTracker(env) {
   if (!env.DB || !env.BOL_CLIENT_ID || !env.BOL_CLIENT_SECRET) return;
-  const rows = await env.DB.prepare("SELECT * FROM tracked_products").all();
+  const categories = await env.DB.prepare("SELECT * FROM tracker_categories ORDER BY created_at LIMIT 3").all();
+  for (const category of (categories.results || [])) { try { await syncTrackerCategory(env,category); } catch(error) { console.error("Category sync failed",category.search_term,String(error)); } }
+  const rows = await env.DB.prepare("SELECT * FROM tracked_products ORDER BY last_checked_at IS NULL DESC,last_checked_at ASC LIMIT 150").all();
   for (const product of (rows.results || [])) {
     try { const snapshot=await collectTrackerSnapshot(env,product); await saveTrackerSnapshot(env.DB,product.id,snapshot); }
     catch (error) { console.error("Product tracker daily check failed",product.ean,String(error)); }
@@ -58,7 +82,7 @@ function json(data, status = 200, origin = "https://sazerty07-ship-it.github.io"
 function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin"
@@ -204,6 +228,32 @@ export default {
     }
 
     try {
+
+
+      if (url.pathname === "/api/tracker/categories" && request.method === "GET") {
+        if (!env.DB) return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
+        const rows=await env.DB.prepare("SELECT id,search_term AS searchTerm,created_at AS createdAt,last_synced_at AS lastSyncedAt,product_count AS productCount FROM tracker_categories ORDER BY created_at").all();
+        return json({categories:rows.results||[]},200,allowedOrigin);
+      }
+      if (url.pathname === "/api/tracker/categories" && request.method === "POST") {
+        if (!env.DB) return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
+        const body=await readJson(request);const searchTerm=String(body.searchTerm||"").trim().replace(/\s+/g," ").slice(0,50);
+        if(searchTerm.length<3)return json({error:"Geef een zoekterm van minstens 3 tekens op."},400,allowedOrigin);
+        if(await env.DB.prepare("SELECT id FROM tracker_categories WHERE search_term=?").bind(searchTerm).first())return json({error:"Deze zoekterm wordt al gevolgd."},409,allowedOrigin);
+        const total=await env.DB.prepare("SELECT COUNT(*) AS total FROM tracker_categories").first();
+        if(Number(total?.total||0)>=3)return json({error:"Je kunt maximaal 3 categorieën tegelijk volgen."},400,allowedOrigin);
+        const category={id:crypto.randomUUID(),search_term:searchTerm};
+        await env.DB.prepare("INSERT INTO tracker_categories (id,search_term,created_at) VALUES (?,?,?)").bind(category.id,searchTerm,new Date().toISOString()).run();
+        try{const result=await syncTrackerCategory(env,category);return json({id:category.id,searchTerm,...result},201,allowedOrigin);}
+        catch(error){await env.DB.prepare("DELETE FROM tracker_categories WHERE id=?").bind(category.id).run();throw error;}
+      }
+      const categoryDeleteMatch=url.pathname.match(/^\/api\/tracker\/categories\/([0-9a-f-]{36})$/i);
+      if(categoryDeleteMatch&&request.method==="DELETE"){
+        if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
+        await env.DB.prepare("UPDATE tracked_products SET source_category=NULL WHERE source_category=?").bind(categoryDeleteMatch[1]).run();
+        await env.DB.prepare("DELETE FROM tracker_categories WHERE id=?").bind(categoryDeleteMatch[1]).run();
+        return json({ok:true,message:"Categorievolging gestopt. Bestaande producten blijven bewaard."},200,allowedOrigin);
+      }
 
       // Product Tracker: competitor offer snapshots. Requires a D1 binding named DB.
       if (url.pathname === "/api/tracker/products" && request.method === "GET") {
