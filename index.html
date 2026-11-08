@@ -70,6 +70,10 @@ footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
   <div class="product-form"><input class="tracker-input" id="trackerCategory" maxlength="50" placeholder="Categorie / zoekterm, bv. sfeerlampjes"><button class="secondary" id="trackerCategoryAdd">Categorie volgen</button></div>
   <div id="trackerCategories" class="tracker-products"></div>
  </div>
+ <div class="tracker-filter" style="margin-top:12px;padding:10px;background:#142238;border-radius:10px">
+  <label style="display:flex;gap:9px;align-items:center;font-weight:700"><input id="trackerShowAll" type="checkbox" style="width:18px;height:18px"> Toon ook producten met veel concurrentie of zonder meting</label>
+  <div id="trackerSummary" class="small" style="margin-top:6px">Kansrijke producten eerst</div>
+ </div>
  <div id="trackerMessage" class="small" style="margin-top:9px">Nog geen producten gevolgd.</div>
  <div id="trackerProducts" class="tracker-products"></div>
  <div class="notice">De producten die je toevoegt blijven in deze lijst bewaard. Young Trendz volgt dagelijks de prijs, de koopblokverkoper en het aantal actieve aanbiedingen. De automatische winkelmandjesvoorraadmeting is nog niet beschikbaar: bol.com biedt die niet via de Retailer API en de oude webmethode wordt door anti-botbeveiliging beperkt. Daarom worden geen voorraad- of verkoopaantallen verzonnen.</div>
@@ -148,29 +152,45 @@ async function loadOrderProductDetails(order,itemsBox,shippingBox){
 async function trackerApi(path,options={}){return api(path,options);}
 function trackerMessage(message,kind=""){const el=$("trackerMessage");el.textContent=message;el.className="small"+(kind?" "+kind:"");}
 function euro(value){return value==null?"—":new Intl.NumberFormat("nl-BE",{style:"currency",currency:"EUR"}).format(value);}
+let trackerShowAll=false;
+function trackerOpportunity(p){
+ const n=Number(p.latest?.offerCount);
+ if(!p.latest||!Number.isFinite(n))return {rank:3,label:"Nog meten",reason:"Nog geen concurrentiemeting"};
+ if(n<=2)return {rank:0,label:"Weinig concurrentie",reason:n+" aanbiedingen"};
+ if(n<=5)return {rank:1,label:"Interessant",reason:n+" aanbiedingen"};
+ if(n<=10)return {rank:2,label:"Veel concurrentie",reason:n+" aanbiedingen"};
+ return {rank:3,label:"Sterke concurrentie",reason:n+" aanbiedingen"};
+}
 function renderTrackerProducts(products){
  const root=$("trackerProducts");root.replaceChildren();
- if(!products.length){addText(root,"p","Voeg hierboven een EAN toe om een product te volgen.","small");return;}
- for(const p of products){
+ const sorted=products.slice().sort((a,b)=>{
+  const aa=trackerOpportunity(a),bb=trackerOpportunity(b);
+  return aa.rank-bb.rank || Number(a.latest?.offerCount??9999)-Number(b.latest?.offerCount??9999);
+ });
+ const promising=sorted.filter(p=>trackerOpportunity(p).rank<=1);
+ const visible=trackerShowAll?sorted:promising;
+ $("trackerSummary").textContent=trackerShowAll?"Alle "+sorted.length+" gevolgde producten · gerangschikt op concurrentie":promising.length+" van "+sorted.length+" producten met maximaal 5 aanbiedingen";
+ $("trackerShowAll").checked=trackerShowAll;
+ if(!visible.length){addText(root,"p",products.length?"Nog geen producten met maximaal 5 aanbiedingen. Vink hierboven aan om alle producten te bekijken.":"Voeg hierboven een EAN toe of volg een categorie.","small");return;}
+ for(const p of visible){
+  const opportunity=trackerOpportunity(p);
   const card=document.createElement("div");card.className="tracker-product";
   const head=document.createElement("div");head.className="tracker-product-head";
   const title=document.createElement("div");title.style.fontWeight="800";title.textContent=p.title||("EAN "+p.ean);
-  const tag=document.createElement("span");tag.className="tag";tag.textContent=p.countryCode||"BE";
+  const tag=document.createElement("span");tag.className="tag";tag.textContent=opportunity.label;
   head.append(title,tag);card.append(head);
-  addText(card,"div","EAN "+p.ean,"small");
+  addText(card,"div","EAN "+p.ean+" · "+opportunity.reason,"small");
   const metrics=document.createElement("div");metrics.className="tracker-metrics";
-  for(const [label,value] of [["Koopblokprijs",euro(p.latest?.bestPrice)],["Aanbiedingen",p.latest?.offerCount??"—"],["Koopblokverkoper",p.latest?.bestRetailerName||"—"]]){
+  for(const [label,value] of [["Koopblokprijs",euro(p.latest?.bestPrice)],["Aanbiedingen",p.latest?.offerCount??"Nog niet gemeten"],["Koopblokverkoper",p.latest?.bestRetailerName||"—"]]){
    const m=document.createElement("div");m.className="tracker-metric";addText(m,"b",String(value));addText(m,"small",label);metrics.append(m);
   }
   card.append(metrics);
   if(p.latest?.offers?.length){
-   const offerBox=document.createElement("div");offerBox.className="tracker-offers";
-   addText(offerBox,"b","Actieve aanbiedingen");
-   for(const offer of p.latest.offers.slice(0,8)){
+   const offerBox=document.createElement("div");offerBox.className="tracker-offers";addText(offerBox,"b","Actieve aanbiedingen");
+   for(const offer of p.latest.offers.slice(0,5)){
     const row=document.createElement("div");row.style.display="flex";row.style.justifyContent="space-between";row.style.gap="8px";row.style.padding="5px 0";row.style.borderTop="1px solid var(--line)";
     const seller=document.createElement("span");seller.textContent=(offer.retailerId==="0"?"bol.com":"Verkoper "+(offer.retailerId||"onbekend"))+(offer.bestOffer?" · koopblok":"");
-    const price=document.createElement("b");price.textContent=euro(offer.price);
-    row.append(seller,price);offerBox.append(row);
+    const price=document.createElement("b");price.textContent=euro(offer.price);row.append(seller,price);offerBox.append(row);
    }
    card.append(offerBox);
   }
@@ -182,6 +202,7 @@ function renderTrackerProducts(products){
   actions.append(refresh,history,remove);card.append(actions);root.append(card);
  }
 }
+$("trackerShowAll").addEventListener("change",event=>{trackerShowAll=event.target.checked;loadTrackedProducts();});
 async function loadTrackedProducts(){
  try{const data=await trackerApi("/api/tracker/products");renderTrackerProducts(data.products||[]);if(!(data.products||[]).length)trackerMessage("Nog geen producten gevolgd.");}
  catch(e){trackerMessage("Product Tracker niet beschikbaar: "+e.message,"error");}
