@@ -63,6 +63,13 @@ footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
   <input class="tracker-input" id="trackerTitle" maxlength="120" placeholder="Productnaam (optioneel)">
   <button class="primary" id="trackerAdd">Product toevoegen</button>
  </div>
+
+ <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+  <b>Categorieën automatisch volgen</b>
+  <p class="small">Zoek bijvoorbeeld op “sfeerlampjes”. Maximaal 3 zoektermen en 50 populaire producten per zoekterm. Nieuwe producten worden dagelijks gezocht.</p>
+  <div class="product-form"><input class="tracker-input" id="trackerCategory" maxlength="50" placeholder="Categorie / zoekterm, bv. sfeerlampjes"><button class="secondary" id="trackerCategoryAdd">Categorie volgen</button></div>
+  <div id="trackerCategories" class="tracker-products"></div>
+ </div>
  <div id="trackerMessage" class="small" style="margin-top:9px">Nog geen producten gevolgd.</div>
  <div id="trackerProducts" class="tracker-products"></div>
  <div class="notice">De producten die je toevoegt blijven in deze lijst bewaard. Young Trendz volgt dagelijks de prijs, de koopblokverkoper en het aantal actieve aanbiedingen. De automatische winkelmandjesvoorraadmeting is nog niet beschikbaar: bol.com biedt die niet via de Retailer API en de oude webmethode wordt door anti-botbeveiliging beperkt. Daarom worden geen voorraad- of verkoopaantallen verzonnen.</div>
@@ -179,6 +186,22 @@ async function loadTrackedProducts(){
  try{const data=await trackerApi("/api/tracker/products");renderTrackerProducts(data.products||[]);if(!(data.products||[]).length)trackerMessage("Nog geen producten gevolgd.");}
  catch(e){trackerMessage("Product Tracker niet beschikbaar: "+e.message,"error");}
 }
+
+async function loadTrackerCategories(){
+ const root=$("trackerCategories");
+ try{const data=await trackerApi("/api/tracker/categories");root.replaceChildren();
+  if(!(data.categories||[]).length){addText(root,"p","Nog geen categorieën automatisch gevolgd.","small");return;}
+  for(const c of data.categories){const card=addText(root,"div","","tracker-product");const head=addText(card,"div","","tracker-product-head");addText(head,"b",c.searchTerm);addText(head,"span",String(c.productCount||0)+" producten","tag");addText(card,"div",c.lastSyncedAt?"Laatst bijgewerkt: "+new Date(c.lastSyncedAt).toLocaleString("nl-BE"):"Nog niet bijgewerkt","small");const stop=addText(card,"button","Stop categorievolging","secondary tiny");stop.type="button";stop.addEventListener("click",async()=>{if(!confirm("Categorievolging stoppen? Bestaande producten blijven in je tracker staan."))return;stop.disabled=true;try{await trackerApi("/api/tracker/categories/"+encodeURIComponent(c.id),{method:"DELETE"});await loadTrackerCategories();trackerMessage("Categorievolging gestopt; bestaande producten blijven bewaard.","success");}catch(e){trackerMessage(e.message,"error");stop.disabled=false;}});}
+ }catch(e){trackerMessage("Categorieën ophalen mislukt: "+e.message,"error");}
+}
+async function addTrackerCategory(){
+ const searchTerm=$("trackerCategory").value.trim();if(searchTerm.length<3){trackerMessage("Geef minstens 3 tekens op.","error");return;}
+ const button=$("trackerCategoryAdd");button.disabled=true;button.textContent="Zoeken op bol.com…";
+ try{const r=await trackerApi("/api/tracker/categories",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({searchTerm})});$("trackerCategory").value="";await loadTrackerCategories();await loadTrackedProducts();trackerMessage("Gevonden: "+r.found+" · nieuw toegevoegd: "+r.added+" · totaal in categorie: "+r.productCount,"success");}
+ catch(e){trackerMessage(e.message,"error");}finally{button.disabled=false;button.textContent="Categorie volgen";}
+}
+$("trackerCategoryAdd").addEventListener("click",addTrackerCategory);
+
 async function addTrackedProduct(){
  const ean=$("trackerEan").value.replace(/\D/g,"");const title=$("trackerTitle").value.trim();
  if(!/^\d{8,14}$/.test(ean)){trackerMessage("Vul een geldige EAN-code in (8 tot 14 cijfers).","error");return;}
@@ -274,7 +297,7 @@ const detailWorkers=Array.from({length:4},async()=>{
 await Promise.all(detailWorkers);
 $("ordersMessage").textContent=orders.length?"Bestellingen en productnamen geladen. Selecteer per bestelling de verzendopties.":"Geen open FBR-bestellingen gevonden."; }catch(e){$("ordersTag").textContent="Fout";$("ordersMessage").textContent=e.message;setStatus("Backendverbinding mislukt","bad");if(e.message.includes("401"))setTokenUI(true);}finally{b.disabled=false;b.textContent="Open bestellingen ophalen";}}
 $("loadOrders").addEventListener("click",loadOrders);
-if(appToken)loadTrackedProducts();
+if(appToken){loadTrackedProducts();loadTrackerCategories();}
 initDesktopPrinting();
 if("serviceWorker"in navigator&&location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 </script>
