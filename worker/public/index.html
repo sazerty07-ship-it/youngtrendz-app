@@ -156,6 +156,17 @@ function renderTrackerProducts(products){
    const m=document.createElement("div");m.className="tracker-metric";addText(m,"b",String(value));addText(m,"small",label);metrics.append(m);
   }
   card.append(metrics);
+  if(p.latest?.offers?.length){
+   const offerBox=document.createElement("div");offerBox.className="tracker-offers";
+   addText(offerBox,"b","Actieve aanbiedingen");
+   for(const offer of p.latest.offers.slice(0,8)){
+    const row=document.createElement("div");row.style.display="flex";row.style.justifyContent="space-between";row.style.gap="8px";row.style.padding="5px 0";row.style.borderTop="1px solid var(--line)";
+    const seller=document.createElement("span");seller.textContent=(offer.retailerId==="0"?"bol.com":"Verkoper "+(offer.retailerId||"onbekend"))+(offer.bestOffer?" · koopblok":"");
+    const price=document.createElement("b");price.textContent=euro(offer.price);
+    row.append(seller,price);offerBox.append(row);
+   }
+   card.append(offerBox);
+  }
   if(p.latest?.observedAt)addText(card,"div","Laatst gemeten: "+new Date(p.latest.observedAt).toLocaleString("nl-BE"),"tracker-history");
   const actions=document.createElement("div");actions.className="tracker-actions";
   const refresh=document.createElement("button");refresh.className="secondary tiny";refresh.textContent="Nu meten";refresh.addEventListener("click",()=>refreshTrackedProduct(p.id,refresh));
