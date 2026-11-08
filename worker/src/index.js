@@ -208,8 +208,8 @@ export default {
       // Product Tracker: competitor offer snapshots. Requires a D1 binding named DB.
       if (url.pathname === "/api/tracker/products" && request.method === "GET") {
         if (!env.DB) return json({ error: "Product Tracker-database is nog niet gekoppeld (D1-binding DB)." }, 503, allowedOrigin);
-        const rows = await env.DB.prepare("SELECT p.id,p.ean,p.title,p.country_code AS countryCode,p.created_at AS createdAt,s.best_price AS bestPrice,s.offer_count AS offerCount,s.best_retailer_name AS bestRetailerName,s.observed_at AS observedAt FROM tracked_products p LEFT JOIN tracker_snapshots s ON s.id=(SELECT id FROM tracker_snapshots WHERE product_id=p.id ORDER BY observed_at DESC LIMIT 1) ORDER BY p.created_at DESC").all();
-        return json({ products: (rows.results || []).map(r => ({ id:r.id,ean:r.ean,title:r.title,countryCode:r.countryCode,createdAt:r.createdAt,latest:r.observedAt?{bestPrice:r.bestPrice,offerCount:r.offerCount,bestRetailerName:r.bestRetailerName,observedAt:r.observedAt}:null })) },200,allowedOrigin);
+        const rows = await env.DB.prepare("SELECT p.id,p.ean,p.title,p.country_code AS countryCode,p.created_at AS createdAt,s.best_price AS bestPrice,s.offer_count AS offerCount,s.best_retailer_name AS bestRetailerName,s.observed_at AS observedAt,s.offers_json AS offersJson FROM tracked_products p LEFT JOIN tracker_snapshots s ON s.id=(SELECT id FROM tracker_snapshots WHERE product_id=p.id ORDER BY observed_at DESC LIMIT 1) ORDER BY p.created_at DESC").all();
+        return json({ products: (rows.results || []).map(r => ({ id:r.id,ean:r.ean,title:r.title,countryCode:r.countryCode,createdAt:r.createdAt,latest:r.observedAt?{bestPrice:r.bestPrice,offerCount:r.offerCount,bestRetailerName:r.bestRetailerName,observedAt:r.observedAt,offers:JSON.parse(r.offersJson||"[]")}:null })) },200,allowedOrigin);
       }
       if (url.pathname === "/api/tracker/products" && request.method === "POST") {
         if (!env.DB) return json({ error: "Product Tracker-database is nog niet gekoppeld (D1-binding DB)." },503,allowedOrigin);
@@ -238,7 +238,7 @@ export default {
       const trackerDeleteMatch=url.pathname.match(/^\/api\/tracker\/products\/([0-9a-f-]{36})$/i);
       if(trackerDeleteMatch&&request.method==="DELETE"){
         if(!env.DB)return json({error:"Product Tracker-database is nog niet gekoppeld (D1-binding DB)."},503,allowedOrigin);
-        await env.DB.prepare("DELETE FROM tracked_products WHERE id=?").bind(trackerDeleteMatch[1]).run();
+        await env.DB.prepare("DELETE FROM tracker_snapshots WHERE product_id=?").bind(trackerDeleteMatch[1]).run();\n        await env.DB.prepare("DELETE FROM tracked_products WHERE id=?").bind(trackerDeleteMatch[1]).run();
         return json({ok:true},200,allowedOrigin);
       }
 
