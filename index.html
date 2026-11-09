@@ -276,17 +276,63 @@ async function pdfBlobToPng(blob){
  await page.render({canvasContext:canvas.getContext("2d"),viewport}).promise;
  return canvas.toDataURL("image/png");
 }
-async function loadDeliveryOptions(order,card,button){button.disabled=true;button.textContent="Opties ophalen…";const area=card.querySelector(".options-area");area.replaceChildren();try{const result=await api("/api/delivery-options",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderItems:getItems(order)})});const options=result.deliveryOptions||[];if(!options.length){addText(area,"p","Geen geschikte verzendopties teruggekregen van bol.com.","small");return;}const choices=addText(area,"div","","options");let selected=null;const choose=document.createElement("button");choose.className="primary";choose.textContent="Geselecteerde verzendoptie gebruiken";choose.disabled=true;area.append(choose);
-for(const option of options){const b=document.createElement("button");b.type="button";b.className="shipping-option";const price=option.labelPrice?.totalPrice;const details=[option.labelDisplayName||option.transporterCode||"Verzendoptie",money(price),option.labelType||"",option.validUntilDate?"Geldig tot "+option.validUntilDate:""].filter(Boolean).join(" · ");b.textContent=details+(option.recommended?" · AANBEVOLEN":"");if(option.packageRestrictions){const extra=document.createElement("div");extra.className="small";extra.textContent="Beperkingen: "+[option.packageRestrictions.maxWeight,option.packageRestrictions.maxDimensions].filter(Boolean).join(" / ");b.append(extra);}b.addEventListener("click",()=>{selected=option;choices.querySelectorAll("button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");choose.disabled=false;});choices.append(b);}
-choose.addEventListener("click",()=>requestLabel(order,selected,card,choose));const recommended=options.find(o=>o.recommended);if(recommended){const idx=options.indexOf(recommended);choices.children[idx]?.click();}
-}catch(e){addText(area,"p",e.message,"small error");}finally{button.disabled=false;button.textContent="Verzendopties ophalen";}}
+const SHIPPING_PREF_KEY="yt-shipping-method-preference-v1";
+function getSavedShippingPreference(){try{return JSON.parse(localStorage.getItem(SHIPPING_PREF_KEY)||"null");}catch(_){return null;}}
+function saveShippingPreference(option){const pref={transporterCode:option.transporterCode||"",labelType:option.labelType||"",labelDisplayName:option.labelDisplayName||""};try{localStorage.setItem(SHIPPING_PREF_KEY,JSON.stringify(pref));}catch(_){}}
+function matchesShippingPreference(option,pref){
+ if(!pref)return false;
+ const identity=option.transporterCode||option.labelDisplayName||"";
+ const savedIdentity=pref.transporterCode||pref.labelDisplayName||"";
+ return Boolean(identity&&savedIdentity&&identity===savedIdentity&&String(option.labelType||"")===String(pref.labelType||""));
+}
+async function loadDeliveryOptions(order,card,button){
+ button.disabled=true;button.textContent="Verzendopties laden…";
+ const area=card.querySelector(".options-area");area.replaceChildren();
+ try{
+  const result=await api("/api/delivery-options",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderItems:getItems(order)})});
+  const options=result.deliveryOptions||[];
+  if(!options.length){addText(area,"p","Geen geschikte verzendopties teruggekregen van bol.com.","small");return;}
+  const saved=getSavedShippingPreference();
+  const preferred=options.find(option=>matchesShippingPreference(option,saved));
+  const requestPreferred=()=>{
+   area.replaceChildren();
+   const info=addText(area,"div","","shipping-block");
+   addText(info,"b","Opgeslagen verzendmethode","success");
+   addText(info,"div",[preferred.labelDisplayName||preferred.transporterCode||"Verzendoptie",preferred.labelType||"",money(preferred.labelPrice?.totalPrice)].filter(Boolean).join(" · "),"small");
+   const use=addText(area,"button","Label aanvragen met deze methode","primary");
+   use.type="button";use.addEventListener("click",()=>requestLabel(order,preferred,card,use));
+   const change=addText(area,"button","Andere verzendmethode kiezen","secondary tiny");
+   change.type="button";change.style.marginTop="7px";
+   change.addEventListener("click",()=>renderChoices());
+  };
+  const renderChoices=()=>{
+   area.replaceChildren();
+   const choices=addText(area,"div","","options");let selected=preferred||null;
+   const choose=addText(area,"button",preferred?"Geselecteerde methode gebruiken":"Verzendmethode bevestigen","primary");
+   choose.type="button";choose.disabled=!selected;
+   for(const option of options){
+    const b=document.createElement("button");b.type="button";b.className="shipping-option";
+    const price=option.labelPrice?.totalPrice;
+    const details=[option.labelDisplayName||option.transporterCode||"Verzendoptie",money(price),option.labelType||"",option.validUntilDate?"Geldig tot "+option.validUntilDate:""].filter(Boolean).join(" · ");
+    b.textContent=details+(option.recommended?" · AANBEVOLEN":"");
+    if(option.packageRestrictions){const extra=document.createElement("div");extra.className="small";extra.textContent="Beperkingen: "+[option.packageRestrictions.maxWeight,option.packageRestrictions.maxDimensions].filter(Boolean).join(" / ");b.append(extra);}
+    if(option===selected)b.classList.add("selected");
+    b.addEventListener("click",()=>{selected=option;choices.querySelectorAll("button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");choose.disabled=false;});
+    choices.append(b);
+   }
+   choose.addEventListener("click",()=>{if(!selected)return;saveShippingPreference(selected);requestLabel(order,selected,card,choose);});
+  };
+  if(preferred)requestPreferred();else renderChoices();
+ }catch(e){addText(area,"p",e.message,"small error");}
+ finally{button.disabled=false;button.textContent="Verzendopties opnieuw ophalen";}
+}
 async function pollProcess(id){let last=null;for(let n=0;n<20;n++){last=await api("/api/process-status?id="+encodeURIComponent(id));if(last.status==="SUCCESS"||last.status==="FAILURE"||last.status==="TIMEOUT")return last;await delay(3000);}return last;}
 async function requestLabel(order,option,card,button){button.disabled=true;button.textContent="Label aanvragen…";const area=card.querySelector(".label-area");area.replaceChildren();try{const result=await api("/api/shipping-labels",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderItems:getItems(order),shippingLabelOfferId:option.shippingLabelOfferId})});if(!result.processStatusId)throw new Error("Bol.com gaf geen processStatusId terug.");addText(area,"p","Label wordt verwerkt bij bol.com…","small");const status=await pollProcess(result.processStatusId);if(status.status!=="SUCCESS"||!status.entityId)throw new Error(status.errorMessage||("Labelverwerking: "+status.status));const shippingLabelId=String(status.entityId);labelsRequested++;$("labelsCount").textContent=String(labelsRequested);renderLabelActions(order,shippingLabelId,card,option);button.dataset.done="1";button.textContent="Label aangevraagd";}catch(e){addText(area,"p",e.message,"small error");}finally{if(button.dataset.done!=="1"){button.disabled=false;button.textContent="Geselecteerde verzendoptie gebruiken";}}}
 function renderLabelActions(order,labelId,card,option){const area=card.querySelector(".label-area");area.replaceChildren();const panel=addText(area,"div","","label-panel");addText(panel,"b","Label klaar bij bol.com","success");addText(panel,"p",(option.labelDisplayName||option.transporterCode||"Verzendoptie")+" · "+money(option.labelPrice?.totalPrice),"small");const pdfButton=addText(panel,"button",window.ytDesktop?"Etiket afdrukken":"Etiket opslaan / openen","secondary");pdfButton.type="button";pdfButton.addEventListener("click",()=>openPrintPdf(labelId,pdfButton));if(window.ytDesktop){pdfButton.textContent="Automatisch afdrukken…";openPrintPdf(labelId,pdfButton);}const shipButton=addText(panel,"button","Verzending definitief registreren","primary");shipButton.type="button";shipButton.addEventListener("click",()=>registerShipment(order,labelId,shipButton));addText(panel,"p","Let op: definitief registreren bij bol.com activeert de labelkost.","small");}
 async function openPrintPdf(labelId,button){button.disabled=true;button.textContent=window.ytDesktop?"Label afdrukken…":"Etiket klaarmaken…";try{const response=await api("/api/shipping-labels/"+encodeURIComponent(labelId));const source=await response.arrayBuffer();const blob=await makePrintPdf(source);if(window.ytDesktop){await desktopPrintersReady;const dataUrl=await pdfBlobToPng(blob);const result=await window.ytDesktop.printImage({dataUrl,printerName:$("desktopPrinterSelect")?.value||""});button.textContent="Afgedrukt · "+result.printer;addText(button.parentElement,"p","Printopdracht verzonden naar "+result.printer+".","small success");}else{const file=new File([blob],"YoungTrendz-verzendlabel.pdf",{type:"application/pdf"});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){button.textContent="Deelmenu openen…";try{await navigator.share({files:[file],title:"Young Trendz verzendlabel",text:"Open het etiket in Labelife om het af te drukken."});button.textContent="Etiket opnieuw delen";}catch(e){if(e&&e.name==="AbortError"){button.textContent="Etiket opnieuw delen";}else{throw e;}}}else{const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="YoungTrendz-verzendlabel.pdf";a.click();button.textContent="PDF opnieuw opslaan";}}}catch(e){alert("Afdrukken/verwerken is niet gelukt: "+e.message);button.textContent="Opnieuw proberen";}finally{button.disabled=false;}}
 async function makePrintPdf(source){if(!window.pdfjsLib||!window.jspdf)throw new Error("PDF-bibliotheken niet geladen. Controleer je internetverbinding en probeer opnieuw.");pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";const doc=await pdfjsLib.getDocument({data:new Uint8Array(source)}).promise;const page=await doc.getPage(1);const viewport=page.getViewport({scale:2.5});const canvas=document.createElement("canvas");canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);await page.render({canvasContext:ctx,viewport}).promise;const {data,width,height}=ctx.getImageData(0,0,canvas.width,canvas.height);let minX=width,minY=height,maxX=-1,maxY=-1;const step=2;for(let y=0;y<height;y+=step){for(let x=0;x<width;x+=step){const i=(y*width+x)*4;const darkness=255-Math.min(data[i],data[i+1],data[i+2]);if(darkness>24){if(x<minX)minX=x;if(y<minY)minY=y;if(x>maxX)maxX=x;if(y>maxY)maxY=y;}}}if(maxX<0||maxY<0)throw new Error("Geen labelinhoud gevonden in de PDF.");const pad=Math.max(10,Math.round(Math.min(width,height)*0.006));minX=Math.max(0,minX-pad);minY=Math.max(0,minY-pad);maxX=Math.min(width-1,maxX+pad);maxY=Math.min(height-1,maxY+pad);const crop=document.createElement("canvas");crop.width=maxX-minX+1;crop.height=maxY-minY+1;crop.getContext("2d").drawImage(canvas,minX,minY,crop.width,crop.height,0,0,crop.width,crop.height);const rotated=document.createElement("canvas");rotated.width=crop.height;rotated.height=crop.width;const rctx=rotated.getContext("2d");rctx.translate(rotated.width/2,rotated.height/2);rctx.rotate(Math.PI/2);rctx.drawImage(crop,-crop.width/2,-crop.height/2);const image=rotated.toDataURL("image/png");const pdf=new jspdf.jsPDF({orientation:"portrait",unit:"mm",format:[104,159],compress:true});const scale=Math.min(104/rotated.width,159/rotated.height);const w=rotated.width*scale,h=rotated.height*scale;pdf.addImage(image,"PNG",(104-w)/2,(159-h)/2,w,h,undefined,"FAST");return pdf.output("blob");}
 async function registerShipment(order,labelId,button){if(!confirm("Zending definitief bij bol.com registreren? De labelkost wordt hiermee geactiveerd."))return;button.disabled=true;button.textContent="Zending registreren…";try{const result=await api("/api/shipments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderItems:getItems(order),shippingLabelId:labelId})});if(!result.processStatusId)throw new Error("Bol.com gaf geen processStatusId terug.");const status=await pollProcess(result.processStatusId);if(status.status!=="SUCCESS")throw new Error(status.errorMessage||("Zendingstatus: "+status.status));button.textContent="Zending geregistreerd";button.disabled=true;button.classList.add("success");addText(button.parentElement,"p","Bol.com heeft de zending geregistreerd. Shipment ID: "+(status.entityId||"ontvangen"),"small success");}catch(e){alert("Registreren is niet bevestigd: "+e.message);button.disabled=false;button.textContent="Opnieuw proberen";}}
-async function loadOrders(){if(!appToken){setTokenUI(true);$("ordersMessage").textContent="Vul eerst je APP_ACCESS_TOKEN in.";return;}const b=$("loadOrders");b.disabled=true;b.textContent="Bestellingen ophalen…";$("ordersTag").textContent="Verbinden…";$("orderList").replaceChildren();try{const data=await api("/api/orders?status=OPEN&fulfilment-method=FBR&page=1");const orders=data.orders||[];$("ordersCount").textContent=String(orders.length);$("ordersTag").textContent="Verbonden";$("ordersMessage").textContent=orders.length?"Selecteer per bestelling de verzendopties.":"Geen open FBR-bestellingen gevonden.";setStatus("Bol.com verbonden","good");setTokenUI(false);const detailQueue=[];
+async function loadOrders(){if(!appToken){setTokenUI(true);$("ordersMessage").textContent="Vul eerst je APP_ACCESS_TOKEN in.";return;}const b=$("loadOrders");b.disabled=true;b.textContent="Bestellingen ophalen…";$("ordersTag").textContent="Verbinden…";$("orderList").replaceChildren();try{const data=await api("/api/orders?status=OPEN&fulfilment-method=FBR&page=1");const orders=data.orders||[];$("ordersCount").textContent=String(orders.length);$("ordersTag").textContent="Verbonden";$("ordersMessage").textContent=orders.length?"Verzendopties worden automatisch opgehaald. Je voorkeursmethode wordt onthouden.":"Geen open FBR-bestellingen gevonden.";setStatus("Bol.com verbonden","good");setTokenUI(false);const detailQueue=[];const deliveryQueue=[];
 for(const order of orders){
  const card=addText($("orderList"),"article","","order");
  addText(card,"div","Bestelling "+(order.orderId||"—"),"order-title");
@@ -306,7 +352,7 @@ for(const order of orders){
  const actions=addText(card,"div","","order-actions");
  const opt=addText(actions,"button","Verzendopties ophalen","secondary");
  opt.type="button";opt.disabled=!items.length;
- opt.addEventListener("click",()=>loadDeliveryOptions(order,card,opt));
+ opt.textContent="Verzendopties laden…";deliveryQueue.push({order,card,button:opt});
  addText(card,"div","","options-area");addText(card,"div","","label-area");
 }
 const detailWorkers=Array.from({length:4},async()=>{
@@ -316,7 +362,9 @@ const detailWorkers=Array.from({length:4},async()=>{
  }
 });
 await Promise.all(detailWorkers);
-$("ordersMessage").textContent=orders.length?"Bestellingen en productnamen geladen. Selecteer per bestelling de verzendopties.":"Geen open FBR-bestellingen gevonden."; }catch(e){$("ordersTag").textContent="Fout";$("ordersMessage").textContent=e.message;setStatus("Backendverbinding mislukt","bad");if(e.message.includes("401"))setTokenUI(true);}finally{b.disabled=false;b.textContent="Open bestellingen ophalen";}}
+const deliveryWorkers=Array.from({length:2},async()=>{while(deliveryQueue.length){const task=deliveryQueue.shift();await loadDeliveryOptions(task.order,task.card,task.button);}});
+await Promise.all(deliveryWorkers);
+$("ordersMessage").textContent=orders.length?"Bestellingen geladen. Je voorkeursmethode wordt automatisch toegepast waar beschikbaar.":"Geen open FBR-bestellingen gevonden."; }catch(e){$("ordersTag").textContent="Fout";$("ordersMessage").textContent=e.message;setStatus("Backendverbinding mislukt","bad");if(e.message.includes("401"))setTokenUI(true);}finally{b.disabled=false;b.textContent="Open bestellingen ophalen";}}
 $("loadOrders").addEventListener("click",loadOrders);
 if(appToken){loadTrackedProducts();loadTrackerCategories();}
 initDesktopPrinting();
