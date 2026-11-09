@@ -327,8 +327,8 @@ for(const order of orders){
  const actions=addText(card,"div","","order-actions");
  const opt=addText(actions,"button","Verzendopties ophalen","secondary");
  opt.type="button";opt.disabled=!items.length;
- if(items.length){const savedLabel=getSavedOrderLabel(order);if(savedLabel?.labelId){opt.disabled=true;opt.textContent="Label reeds aangemaakt";renderLabelActions(order,savedLabel.labelId,card,savedLabel,false);}else{opt.textContent="Verzendopties laden…";deliveryQueue.push({order,card,button:opt});}}else{opt.disabled=true;opt.textContent="Geen bestelartikelen";}
  addText(card,"div","","options-area");addText(card,"div","","label-area");
+ if(items.length){const savedLabel=getSavedOrderLabel(order);if(savedLabel?.labelId){opt.disabled=true;opt.textContent="Label reeds aangemaakt";renderLabelActions(order,savedLabel.labelId,card,savedLabel,false);}else{opt.textContent="Verzendopties laden…";deliveryQueue.push({order,card,button:opt});}}else{opt.disabled=true;opt.textContent="Geen bestelartikelen";}
 }
 const detailWorkers=Array.from({length:4},async()=>{
  while(detailQueue.length){
