@@ -352,7 +352,7 @@ for(const order of orders){
  const actions=addText(card,"div","","order-actions");
  const opt=addText(actions,"button","Verzendopties ophalen","secondary");
  opt.type="button";opt.disabled=!items.length;
- opt.textContent="Verzendopties laden…";deliveryQueue.push({order,card,button:opt});
+ if(items.length){opt.textContent="Verzendopties laden…";deliveryQueue.push({order,card,button:opt);}else{opt.disabled=true;opt.textContent="Geen bestelartikelen";}
  addText(card,"div","","options-area");addText(card,"div","","label-area");
 }
 const detailWorkers=Array.from({length:4},async()=>{
