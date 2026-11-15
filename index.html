@@ -339,8 +339,27 @@ const detailWorkers=Array.from({length:4},async()=>{
 await Promise.all(detailWorkers);
 const deliveryWorkers=Array.from({length:2},async()=>{while(deliveryQueue.length){const task=deliveryQueue.shift();await loadDeliveryOptions(task.order,task.card,task.button);}});
 await Promise.all(deliveryWorkers);
+ $("bulkLabels").disabled=!orders.length;
 $("ordersMessage").textContent=orders.length?"Bestellingen geladen. Bestaande labels worden per bestelling hersteld.":"Geen open FBR-bestellingen gevonden."; }catch(e){$("ordersTag").textContent="Fout";$("ordersMessage").textContent=e.message;setStatus("Backendverbinding mislukt","bad");if(e.message.includes("401"))setTokenUI(true);}finally{b.disabled=false;b.textContent="Open bestellingen ophalen";}}
-$("loadOrders").addEventListener("click",loadOrders);
+ async function combineLabelPdfs(blobs){
+  if(!window.pdfjsLib||!window.jspdf)throw new Error("PDF-bibliotheken niet geladen. Controleer je internetverbinding.");
+  pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const merged=new jspdf.jsPDF({orientation:"portrait",unit:"mm",format:[104,159],compress:true});
+  for(let i=0;i<blobs.length;i++){const bytes=await blobs[i].arrayBuffer();const doc=await pdfjsLib.getDocument({data:new Uint8Array(bytes)}).promise;if(i>0)merged.addPage([104,159],"portrait");const page=await doc.getPage(1);const viewport=page.getViewport({scale:2});const canvas=document.createElement("canvas");canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:canvas.getContext("2d"),viewport}).promise;merged.addImage(canvas.toDataURL("image/png"),"PNG",0,0,104,159,undefined,"FAST");doc.destroy();}
+  return merged.output("blob");
+ }
+ async function bulkCreateAndDownloadLabels(){
+  const button=$("bulkLabels"),message=$("bulkLabelsMessage"),cards=Array.from($("orderList").querySelectorAll(".order"));button.disabled=true;button.textContent="Labels verwerken…";message.textContent="Voorbereiding…";
+  try{const tasks=[];for(const card of cards){const order=card._ytOrder;if(!order||!getItems(order).length)continue;const saved=getSavedOrderLabel(order);const labelId=card._ytLabelId||saved?.labelId;if(labelId){tasks.push({order,card,labelId,option:saved||card._ytSelectedOption||{}});continue;}if(card._ytSelectedOption)tasks.push({order,card,option:card._ytSelectedOption});}
+   if(!tasks.length)throw new Error("Er zijn nog geen labels of gekozen verzendmethodes. Kies eerst per bestelling een verzendmethode.");
+   const blobs=new Array(tasks.length);let next=0,completed=0;const failed=[];
+   const worker=async()=>{while(true){const index=next++;if(index>=tasks.length)return;const task=tasks[index];try{let labelId=task.labelId;if(!labelId){const result=await api("/api/shipping-labels",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderItems:getItems(task.order),shippingLabelOfferId:task.option.shippingLabelOfferId})});if(!result.processStatusId)throw new Error("Geen processStatusId ontvangen.");const status=await pollProcess(result.processStatusId);if(status.status!=="SUCCESS"||!status.entityId)throw new Error(status.errorMessage||("Labelverwerking: "+status.status));labelId=String(status.entityId);saveOrderLabel(task.order,labelId,task.option);task.card._ytLabelId=labelId;labelsRequested++;$("labelsCount").textContent=String(labelsRequested);renderLabelActions(task.order,labelId,task.card,task.option,false);}const response=await api("/api/shipping-labels/"+encodeURIComponent(labelId));const source=await response.arrayBuffer();blobs[index]=await makePrintPdf(source);completed++;message.textContent="Labels klaarmaken: "+completed+" / "+tasks.length;}catch(e){failed.push("Bestelling "+(task.order.orderId||"?")+": "+e.message);}}};
+   await Promise.all([worker(),worker()]);const ready=blobs.filter(Boolean);if(!ready.length)throw new Error("Geen labels konden worden klaargemaakt. "+failed.join(" | "));
+   const pdf=await combineLabelPdfs(ready);const url=URL.createObjectURL(pdf);const a=document.createElement("a");a.href=url;a.download="YoungTrendz-alle-verzendlabels.pdf";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);message.textContent=ready.length+" label(s) samengevoegd in één PDF."+(failed.length?" Mislukt: "+failed.join(" | "):"");
+  }catch(e){message.textContent=e.message;}finally{button.disabled=false;button.textContent="Alle labels opnieuw downloaden";}
+ }
+ $("bulkLabels").addEventListener("click",bulkCreateAndDownloadLabels);
+ $("loadOrders").addEventListener("click",loadOrders);
 if(appToken){loadTrackedProducts();loadTrackerCategories();}
 initDesktopPrinting();
 if("serviceWorker"in navigator&&location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
