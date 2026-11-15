@@ -294,7 +294,7 @@ async function loadDeliveryOptions(order,card,button){
    const details=[option.labelDisplayName||option.transporterCode||"Verzendoptie",money(option.labelPrice?.totalPrice),option.labelType||"",option.validUntilDate?"Geldig tot "+option.validUntilDate:""].filter(Boolean).join(" · ");
    b.textContent=details+(option.recommended?" · AANBEVOLEN":"");
    if(option.packageRestrictions){const extra=document.createElement("div");extra.className="small";extra.textContent="Beperkingen: "+[option.packageRestrictions.maxWeight,option.packageRestrictions.maxDimensions].filter(Boolean).join(" / ");b.append(extra);}
-   b.addEventListener("click",()=>{selected=option;choices.querySelectorAll("button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");choose.disabled=false;});
+   b.addEventListener("click",()=>{selected=option;card._ytSelectedOption=option;choices.querySelectorAll("button").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");choose.disabled=false;});
    choices.append(b);
   }
   choose.addEventListener("click",()=>{if(selected){card._ytSelectedOption=selected;requestLabel(order,selected,card,choose);}});
