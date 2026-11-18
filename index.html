@@ -101,7 +101,7 @@ footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
 <script>
 /* Independent login handler: keeps the sign-in button responsive even if the main app script has an error. */
 window.ytLoginRescue = async function(event) {
-  if (event) { event.preventDefault(); event.stopPropagation(); }
+  if (event) { event.preventDefault(); event.stopImmediatePropagation(); }
   const input = document.getElementById("appToken");
   const button = document.getElementById("saveToken");
   const message = document.getElementById("ordersMessage");
