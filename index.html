@@ -40,7 +40,7 @@ footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
 <div class="card-head"><h2>Veilige app-toegang</h2><span class="tag">Eenmalig instellen</span></div>
 <p class="small">Gebruik de APP_ACCESS_TOKEN die als Runtime Secret in Cloudflare staat. Je bol.com Client Secret hoort hier niet thuis.</p>
 <input class="secret" id="appToken" type="password" autocomplete="current-password" placeholder="APP_ACCESS_TOKEN">
-<button class="primary" id="saveToken" type="button" onclick="window.ytLoginRescue(event)">Toegangscode controleren</button>
+<button class="primary" id="saveToken">Toegangscode controleren</button>
 </section>
 
 <section class="card">
@@ -98,41 +98,6 @@ footer{text-align:center;color:#71839a;font-size:11px;padding:16px 0}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-<script>
-/* Independent login handler: keeps the sign-in button responsive even if the main app script has an error. */
-window.ytLoginRescue = async function(event) {
-  if (event) { event.preventDefault(); event.stopImmediatePropagation(); }
-  const input = document.getElementById("appToken");
-  const button = document.getElementById("saveToken");
-  const message = document.getElementById("ordersMessage");
-  const token = input && input.value.trim();
-  if (!token) { if (message) message.textContent = "Vul eerst je toegangscode in."; if(input) input.focus(); return; }
-  if (!button) return;
-  button.disabled = true;
-  button.textContent = "Verbinding controleren…";
-  if (message) message.textContent = "Young Trendz controleert de toegangscode…";
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  try {
-    const response = await fetch("https://youngtrendz-app.s-azerty07.workers.dev/api/auth-check", {
-      method: "GET",
-      headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
-      cache: "no-store",
-      signal: controller.signal
-    });
-    const data = await response.json();
-    if (!response.ok || !data.authorized) throw new Error("Toegangscode niet aanvaard. Controleer de actuele APP_ACCESS_TOKEN.");
-    try { localStorage.setItem("yt-app-token", token); } catch (_) { throw new Error("Safari blokkeert lokale opslag. Open de link rechtstreeks in Safari en schakel privé browsen uit."); }
-    if (message) message.textContent = "Toegang bevestigd. Young Trendz wordt opnieuw geladen…";
-    button.textContent = "Toegang bevestigd";
-    window.location.reload();
-  } catch (error) {
-    if (message) message.textContent = error.name === "AbortError" ? "De server antwoordt niet binnen 15 seconden. Controleer je internetverbinding en probeer opnieuw." : (error.message || "Inloggen mislukt. Probeer opnieuw.");
-    button.disabled = false;
-    button.textContent = "Toegangscode controleren";
-  } finally { clearTimeout(timeout); }
-};
-</script>
 <script>
 const API_BASE="https://youngtrendz-app.s-azerty07.workers.dev";
 const $=id=>document.getElementById(id);
