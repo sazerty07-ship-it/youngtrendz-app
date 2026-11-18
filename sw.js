@@ -1,4 +1,4 @@
-const CACHE = "youngtrendz-shell-v22";
+const CACHE = "youngtrendz-shell-v23";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", event => {
