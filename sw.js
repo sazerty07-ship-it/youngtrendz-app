@@ -20,7 +20,7 @@ self.addEventListener("fetch", event => {
 
   // Always try the network first for page navigations so the app cannot
   // remain stuck on an old cached login script.
-  if (event.request.mode === "navigate) {
+  if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request)
         .then(response => {
